@@ -49,7 +49,18 @@ var app = {
         //$.mobile.allowCrossDomainPages = true;
 
     },
-    // Update DOM on a Received Event
+    
+    waitStart: function(msg){
+        $.mobile.loading( 'show', {
+            text: msg,
+            textVisible: true,
+            theme: 'z',
+            html: ""
+        });
+    },
+    waitStop: function() {
+        $.mobile.loading( 'hide' );
+    },
 
     vibrate: function() {
         navigator.notification.vibrate(2000);
@@ -60,37 +71,16 @@ var app = {
         ref.show();
     },
 
-    ajax: function() {
-        var flickerAPI = "http://api.flickr.com/services/feeds/photos_public.gne?jsoncallback=?";
-          $.getJSON( flickerAPI, {
-            tags: "mount rainier",
-            tagmode: "any",
-            format: "json"
-          })
-          .done(function( data ) {
-            $.each( data.items, function( i, item ) {
-              $( "<img/>" ).attr( "src", item.media.m ).appendTo( "#content" );
-              if ( i === 3 ) {
-                return false;
-              }
-            });
-          });
-
-    },
 
     getList: function() {
         navigator.geolocation.getCurrentPosition(this._doGetList, this.onError);
-
-        $.mobile.loading( 'show', {
-            text: 'Obteniendo unidades',
-            textVisible: true,
-            theme: 'z',
-            html: ""
-        });
-     
+        app.waitStart('Obteniendo ubicacion');     
     },
 
     _doGetList: function(position) {
+        app.waitStop();
+        app.waitStart('Obteniendo listado');
+
         LAT = position.coords.latitude;
         LNG = position.coords.longitude;
 
@@ -101,7 +91,7 @@ var app = {
         
         $.getJSON( url )
           .done(function( data ) {
-            
+            app.vibrate();
             DATA = data;
 
             if(data.length == 0)
@@ -111,83 +101,140 @@ var app = {
 
             $.each( data, function( i, item ) {
                 //$("#content ul").append('<li><a href="#page2" >'+item.texto+' - '+item.denominacion+'</a></li>');
-                $("#content ul").append('<li onclick="app.select($(this))" val="'+i+'">'+item.texto+' - '+item.denominacion+'</a></li>');
+                $("#content ul").append('<li><a data-icon="arrow-r" onclick="app.select($(this))" val="'+i+'">'+item.texto+' - '+item.denominacion+'</a></li>');
                 if ( i === 30 ) {
                     return false;
                 }
             });
 
             $("#content ul").listview('refresh');
-            
+           
+            app.waitStop();
+ 
           })
           .fail(function( jqxhr, textStatus, error ) {
               var err = textStatus + ', ' + error;
               alert(err);
               console.log( "Request Failed: " + err);
-
+              app.waitStop();
             });
 
 
-        $.mobile.loading( 'hide' );
 
     },
 
     select: function(item) {
-        $.mobile.changePage( "#page2", { transition: "slideup"} );
+        $.mobile.changePage( "#page2", { transition: "slide"} );
         item = DATA[item.attr('val')];
         $('#unidad').html(item.denominacion);
         SELECTED_ID = item.id;
+        IMAGE_DATA = null;
+        IMAGE_URI = null;
+        $('#img').attr('src', 'img/logo.png');
     },
 
-    takePhoto: function() {
-        var options = { 
-          quality : 75,
-          destinationType : Camera.DestinationType.DATA_URL,
-          sourceType : Camera.PictureSourceType.CAMERA,
-          allowEdit : false,
-          encodingType: Camera.EncodingType.JPEG,
-          targetWidth: 400,
-          targetHeight: 400,
-          popoverOptions: CameraPopoverOptions,
-          saveToPhotoAlbum: false 
-        };
 
+    useExistingPhoto: function(e) {
+          this.capture(Camera.PictureSourceType.SAVEDPHOTOALBUM);
+        },
 
-        navigator.camera.getPicture(app.captureSuccessData, app.captureError, options);
+        // take a new photo:
+    takePhoto: function(e) {
+          this.capture(Camera.PictureSourceType.CAMERA);
+        },
+
+        // capture either new or existing photo:
+    capture: function(sourceType) {
+          navigator.camera.getPicture(this.onCaptureSuccess, this.onCaptureFail, {
+            destinationType: Camera.DestinationType.FILE_URI,
+            sourceType: sourceType,
+            targetWidth: 300,
+            correctOrientation: true
+          });
     },
 
-    captureSuccess: function (imageURI) {
-        var image = $('#img');
-        image.attr('src', imageURI);        
+    onCaptureSuccess: function(imageURI) {
+        IMAGE_URI = imageURI;
+        $('#img').attr('src', IMAGE_URI);
     },
 
-    captureSuccessData: function (imageData) {
-        var image = $('#img');
-        image.attr('src', "data:image/jpeg;base64," + imageData);        
-        //image.src = "data:image/jpeg;base64," + imageData;
-        IMAGE_DATA = imageData;
+    onCaptureFail: function() {
+        alert('Ocurrio un error al capturar la imagen');
     },
 
-    captureError: function (messsage) {
-        navigator.notification.alert('Error code: ' + message, null, 'Capture Error');
-    },
+    updateDataSinFoto: function(){
+        app.waitStart('Subiendo datos');
+        var params = {
+                id: SELECTED_ID,
+                valor: $('#resultado').val(),
+                lat: LAT,
+                lng: LNG,
 
-    updateUnidad: function () {
-        console.log(IMAGE_DATA);
-        alert(IMAGE_DATA.length);
-        var data = {
-            id:SELECTED_ID,
-            valor: $('#resultado').val(),
-            lat: LAT,
-            lng: LNG,
-            archivo: IMAGE_DATA
-        }
-
-        $.post(URLPUT, data)
-            .done(function(dat) {
-                $.mobile.changePage( "#page1", { transition: "slideup"} );
+              };
+        $.ajax({
+          type: 'POST',
+          url: URLPUT,
+          data: params,
+          success: function(){
+            app.waitStop();
+            $.mobile.changePage( "#page1", { transition: "slide", referse: true} );
+          },
+          error: function(error){
+            app.waitStop();
+            alert("Ocurrio un error : " + error.code);            
+          },
+          dataType: 'json',
         });
-    }
 
+    },
+
+    updateData: function(){
+      try
+      {
+        if(IMAGE_URI == null)
+            return this.updateDataSinFoto();
+
+        app.waitStart('Subiendo datos');
+      var fail, ft, options, params, win;
+      // callback for when the photo has been successfully uploaded:
+      success = function(response) {
+        app.waitStop();
+        alert('Ok');
+        app.vibrate();
+        $.mobile.changePage( "#page1", { transition: "slide", referse: 'true'} );
+      };
+      // callback if the photo fails to upload successfully.
+      fail = function(error) {
+        app.waitStop();
+        alert("Ocurrio un error : " + error.code);
+      };
+        
+      var options = new FileUploadOptions();
+      if(IMAGE_URI != null)
+      {
+        options.fileKey="file";
+        options.fileName=IMAGE_URI.substr(IMAGE_URI.lastIndexOf('/')+1)+'.png';
+        options.mimeType="image/jpeg";
+      }
+      var params = {
+        id: SELECTED_ID,
+        valor: $('#resultado').val(),
+        lat: LAT,
+        lng: LNG
+      };
+
+      options.params = params;
+      var ft = new FileTransfer();
+          ft.upload(IMAGE_URI, URLPUT, success, fail, options);
+          app.waitStart('Actualizando datos');
+
+      }catch(e)
+      {
+        app.waitStop();
+        alert(e.msg);
+      }
+    },
+
+    
       
 };

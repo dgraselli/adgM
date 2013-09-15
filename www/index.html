@@ -1,22 +1,4 @@
 <!DOCTYPE html>
-<!--
-    Licensed to the Apache Software Foundation (ASF) under one
-    or more contributor license agreements.  See the NOTICE file
-    distributed with this work for additional information
-    regarding copyright ownership.  The ASF licenses this file
-    to you under the Apache License, Version 2.0 (the
-    "License"); you may not use this file except in compliance
-    with the License.  You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing,
-    software distributed under the License is distributed on an
-    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-     KIND, either express or implied.  See the License for the
-    specific language governing permissions and limitations
-    under the License.
--->
 <html>
     <head>
         <meta charset="utf-8" />
@@ -41,9 +23,9 @@
             <h1>Unidades</h1>
         </div><!-- /header -->
 
-        <button class="" onclick="app.getList()">json</button>
-        <button onclick="app.showMapa()">Ver mapa</button>
-
+        <a data-role="button" onclick="app.getList()" data-icon="search" data-iconpos="right" data-theme="b" >Obtener unidades</a> 
+        <a data-role="button" onclick="app.showMapa()" data-theme="e">Ver mapa</a> 
+        
         <div id="content">
             <ul data-role="listview"></ul>
         </div>
@@ -57,22 +39,22 @@
         <div data-role="header" id="unidad_title">
             <h1 id="unidad"></h1>
         </div>
-        <img  id="img" onclick="app.takePhoto()" src="img/logo.png" />
+
+        <div data-role="content" align="center">
+        <img  id="img" onclick="app.takePhoto()" src="img/logo.png" style="border: 1px solid black" data-inline="false" alt="Seleciones una imagen"/>
 
 
-        <label for="resultado" class="select">Resultado:</label>
-        <select name="resulado" id="resultado">
-           <option value="res1">Res 1</option>
-           <option value="res2">Res 2</option>
-           <option value="res3">Res 3</option>
+        <select name="resulado" id="resultado" data-inline="false">
+           <option value="Recibida">Recibida</option>
+           <option value="No habia nadie">No habia nadie</option>
+           <option value="No se encontro domicilio">No se encontro domicilio</option>
         </select>
 
-        <button onclick="app.updateUnidad()">Enviar</button>
-        <button onclick="app.showMapa()">Ver mapa</button>
+        <a data-role="button" onclick="app.updateData()" data-icon="check" data-iconpos="right" data-theme="b" data-inline="false">Enviar</a>
+        
+        <a data-role="button" data-rel="back" data-icon="arrow-l" data-inline="false">Volver</a>
 
-        <a data-rel="back"><button>Volver</button></a>
-
-
+        </div>
     </div>
     <!-- /page -->
 
