@@ -87,7 +87,7 @@
 			"file": ".git/COMMIT_EDITMSG",
 			"settings":
 			{
-				"buffer_size": 710,
+				"buffer_size": 3824,
 				"line_ending": "Unix"
 			}
 		},
@@ -306,15 +306,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 710,
+						"buffer_size": 3824,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								45,
-								45
+								21,
+								21
 							]
 						],
 						"settings":
