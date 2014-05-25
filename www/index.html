@@ -115,9 +115,12 @@
                 </div>
                 
                 <div id="fidelizar" class="ui-body-d ui-content">
-                    <a onclick="app.takePhoto()" data-role="button" data-inline="true" data-iconpos="notext" data-icon="camera"></a>
-                <img  id="img"  src="img/logo.png" style="border: 1px solid black" data-inline="false" alt="Seleciones una imagen"/>
+                    <div id="fotos">
+                        <img  id="img" onclick="if(confirm('Desea eliminar esta foto?')) $(this).remove()" src="img/logo.png" data-inline="true"  class="foto"/>
+                    </div>                        
+                    <a onclick="app.takePhoto()" data-role="button" data-inline="true" data-icon="camera">+ Foto</a>
                 </div>
+
                 <div id="gestion" class="ui-body-d ui-content">
                    <h1> Gestion</h1>
                     <ul data-role="listview" data-inset="true">

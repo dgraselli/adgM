@@ -16,15 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
+TEST = false;
 var host = 'http://192.168.0.180:3000';
 var host = "https://adgw.herokuapp.com/"
-var host = 'http://localhost:3000';
+//var host = 'http://localhost:3000';
 
 var URL = host+"/lecturas/pendientes.json";
 //var URL = "lecturas_pendientes.json";
 var URL_PARAM = host+"/parametricas";
 var URLPUT = host+"/update_lectura";
+var URLPUT_FOTO = host+= "/update_foto"
 var URL_MAPA = host+"/mapa";
 
 var LAT = 0;
@@ -32,6 +33,7 @@ var LNG = 0;
 var DATA;
 var SELECTED_ID;
 var IMAGE_DATA;
+var IMAGE_URI;
 
 var app = {
     // Application Constructor
@@ -70,11 +72,7 @@ var app = {
       $('#url').val(host);
     },
 
-
-
-
-
-        waitStart: function(msg){
+    waitStart: function(msg){
         $.mobile.loading( 'show', {
             text: msg,
             textVisible: true,
@@ -96,33 +94,29 @@ var app = {
     },
 
 
-    getList: function() {
+    geoAndThen: function(func) {
 
       if (navigator.geolocation)
       {
-    
-          navigator.geolocation.getCurrentPosition(this._doGetList);
+          navigator.geolocation.getCurrentPosition(func);
           app.waitStart('Obteniendo ubicacion');     
       }
 
     },
 
 
-    _doGetList: function(position) {
+    getList: function() {
         app.waitStop();
         app.waitStart('Obteniendo listado');
 
-        LAT = position.coords.latitude;
-        LNG = position.coords.longitude;
 
-        url  = URL + "?lat="+ LAT + "&lng="+ LNG ;
-        $('#log').html(url);
+        //url  = URL + "?lat="+ LAT + "&lng="+ LNG ;
+        //$('#log').html(url);
+        url = URL;
 
         $("#content ul").empty();
 
         console.log( url);
-
-        //alert(url);
 
         $.getJSON( url )
           .done(function( data ) {
@@ -147,7 +141,7 @@ var app = {
 
             $( ".selector" ).on( "panelclose", function( event, ui ) {
 
-});
+            });
             app.waitStop();
  
           })
@@ -174,12 +168,12 @@ var app = {
         item = DATA[item.attr('val')];
         $('#unidad').html(item.usuario + ' - ' + item.razon_social);
         $('#incidencia').select(0);
-        $('#lectura').val('');
+        $('#iptlectura').val('');
 
         SELECTED_ID = item.id;
         IMAGE_DATA = null;
         IMAGE_URI = null;
-        $('#img').attr('src', 'img/logo.png');
+        $('#fotos').empty();
     },
 
 
@@ -189,9 +183,23 @@ var app = {
 
         // take a new photo:
     takePhoto: function(e) {
-      alert('takephoto');
-          this.capture(Camera.PictureSourceType.CAMERA);
-        },
+      if (navigator.camera)
+      {
+        this.capture(Camera.PictureSourceType.CAMERA);
+      }
+      else
+      {
+        IMAGE_URI = 'img/logo.png';
+        app.addFoto(IMAGE_URI);
+      }
+    },
+
+    addFoto: function(src)
+    {
+        var img = $('<img class="foto" onclick="if(confirm(\'Desea eliminar esta foto?\')) $(this).remove();">'); 
+        img.attr('src', src);
+        img.appendTo('#fotos');
+    },
 
         // capture either new or existing photo:
     capture: function(sourceType) {
@@ -205,28 +213,22 @@ var app = {
 
     onCaptureSuccess: function(imageURI) {
         IMAGE_URI = imageURI;
-        $('#img').attr('src', IMAGE_URI);
+        app.addFoto(IMAGE_URI);
     },
 
     onCaptureFail: function() {
         alert('Ocurrio un error al capturar la imagen');
     },
 
-    updateDataSinFoto: function(){
-        //app.waitStart('Subiendo datos');
-          var inc = "";
-       
+    getParams: function()
+    {
+         var inc = "";       
         $('input:checked').each(function(i,o){
 
           if(inc == "") inc = $(o).val();
           else inc = inc + "," + $(o).val();
         });
-        
-var dNow = new Date();
-//var localdate=  dNow.getDate() + '/' + (dNow.getMonth()+1) + '/' + dNow.getFullYear() + ' ' + dNow.getHours() + ':' + dNow.getMinutes();
-
-       // alert(localdate);
-
+        var dNow = new Date();
         var params = {
           id: SELECTED_ID,
           incidencias: inc,
@@ -234,10 +236,16 @@ var dNow = new Date();
           fh: dNow,
           lat: LAT,
           lng: LNG
+        };
 
-              };
+        return params;
+    },
+
+    updateDataSinFoto: function(){
+        params = app.getParams();
+        //alert(params);
         $.ajax({
-          type: 'GET',
+          type: 'POST',
           url: URLPUT,
           data: params,
           success: function(){
@@ -255,57 +263,81 @@ var dNow = new Date();
     },
 
     updateData: function(){
+        app.geoAndThen(app.do_updateData);
+    },
+
+
+    uploadFoto: function (imageURI, vImage) {
+      if (TEST) return;
+
+      result_ok = function result_ok(r) {
+         console.log("Code = " + r.responseCode);
+         console.log("Response = " + r.response);
+         //alert($.parseJSON(r.response))    
+
+         // borrar la foto
+         
+          }
+
+      result_fail = function result_fail(error) {
+        console.log("Response = " +  error.code);
+
+        //marcar para intentar luego
+
+        }
+
+      var imagefile = imageURI; 
+       /* Image Upload Start */
+      var ft = new FileTransfer();                     
+      var options = new FileUploadOptions();                      
+      options.fileKey= vImage;                      
+      options.fileName=imagefile.substr(imagefile.lastIndexOf('/')+1);
+      options.mimeType="image/jpeg";  
+      options.params = app.getParams();
+      options.chunkedMode = false;      
+      ft.upload(imagefile, URLPUT_FOTO, result_ok, result_fail, options);   
+     },
+
+    do_updateData: function(position){
       try
-      {
-      
-//alert(s);
-       
+      {  
+        LAT = position.coords.latitude;
+        LNG = position.coords.longitude;
+        
+        if(IMAGE_URI == null){
+            return app.updateDataSinFoto();
+        }
  
-        if(IMAGE_URI == null)
-            return this.updateDataSinFoto();
- 
- 
-        app.waitStart('Subiendo datos');
+      app.waitStart('Subiendo datos');
       var fail, ft, options, params, win;
       // callback for when the photo has been successfully uploaded:
-      success = function(response) {
-        app.waitStop();
-        alert('Ok');
-        app.vibrate();
-        $.mobile.changePage( "#page1", { transition: "slide", referse: 'true'} );
-      };
-      // callback if the photo fails to upload successfully.
-      fail = function(error) {
-        app.waitStop();
-        alert("Ocurrio un error x : " + error.code);
-      };
+
+      
         
-      var options = new FileUploadOptions();
-      if(IMAGE_URI != null)
+      if($('#fotos img'))
       {
-        options.fileKey="file";
-        options.fileName=IMAGE_URI.substr(IMAGE_URI.lastIndexOf('/')+1)+'.png';
-        options.mimeType="image/jpeg";
+        app.waitStart('Actualizando datos');
+        $('#fotos img').each(function (i, img){
+          app.uploadFoto($(img).attr('src'), "Foto_"+i);
+        }); 
+
       }
-      var params = {
-        id: SELECTED_ID,
-        incidencia: $('#incidencia').val(),
-        valor: $('#valor').val(),
-        lat: LAT,
-        lng: LNG
-      };
 
-      options.params = params;
-      var ft = new FileTransfer();
-          ft.upload(IMAGE_URI, URLPUT, success, fail, options);
-          app.waitStart('Actualizando datos');
+      //listo
+      app.waitStop();
+      $('#li_'+SELECTED_ID).remove();
+      $.mobile.changePage( "#page1", { transition: "slide", referse: true} );
 
-      }catch(e)
+                 
+      }
+      catch(e)
       {
         app.waitStop();
+        alert("Error");
         alert(e.msg);
       }
     },
+
     saveSetting: function()
     {
       try

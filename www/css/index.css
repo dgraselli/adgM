@@ -70,7 +70,7 @@ body {
 }
 
 h1 {
-    font-size:24px;
+    font-size:54px;
     font-weight:normal;
     margin:0px;
     overflow:visible;
@@ -117,4 +117,21 @@ h1 {
 button {
     width: 100%;
     height: 200px;
+}
+
+img.foto
+{
+    float: left;
+    border: 1px solid black;
+}
+
+a[data-role="button"] {
+  height: 200px;
+  font-size: 48px;
+}
+
+#lectura input
+{
+  height: 200px;
+  font-size: 48px;
 }
