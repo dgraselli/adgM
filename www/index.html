@@ -10,64 +10,44 @@
         
         <script src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
         <script src="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.js"></script>
- <script type="text/javascript">
-      function obtenerTexto( input ) {
-        if ( ! confirm ( '¿Has dicho ' + input.value + '?' ) ) input.value = '';
-      }
-</script>
   
-        <title>Hello World</title>
+        <title>adgM</title>
     </head>
     <body>
 
-
-    <!-- Start of first page -->
-    <div data-role="page" id="page1">
-    
-    <div data-role="panel" id="menu" data-position="left" data-display="overlay" data-dismissible="true">
-        <!-- panel content goes here -->
-        <a data-role="button" onclick="app.getList()" data-icon="search" data-iconpos="left" data-theme="b" >Obtener Ruta</a>
-        <a data-role="button" onclick="app.getList()" data-icon="search" data-iconpos="left" data-theme="b" >Buscar Unidad</a>
-        <a data-role="button" onclick="app.showMapa()" data-theme="e">Ver mapa</a> 
-        <h1>
-        <a data-role="button" data-rel="button" href="#config" data-icon="gear" data-iconpos="notext" ></a>
-        <a data-role="button" data-rel="close" href="#ruta" data-icon="delete" data-iconpos="notext" ></a>
-    </div><!-- /panel -->
-
-    <div data-role="panel" data-position="right" data-display="reveal" data-theme="a" id="login">
-
-        <form class="userform">
+    <div data-role="page" id="loginPage">
+            <form id="loginForm" class="userform" >
 
             <h2>Login</h2>
 
             <label for="name">Usuario:</label>
-            <input type="text" name="name" id="name" value="" data-clear-btn="true" data-mini="true">
+            <input type="text" name="name" id="username" value="" data-clear-btn="true" data-mini="true">
 
             <label for="password">Password:</label>
             <input type="password" name="password" id="password" value="" data-clear-btn="true" autocomplete="off" data-mini="true">
 
-            <div class="ui-grid-a">
-                <div class="ui-block-a"><a href="#" data-rel="close" class="ui-btn ui-shadow ui-corner-all ui-btn-b ui-mini">Cancel</a></div>
-                <div class="ui-block-b"><a href="#" data-rel="close" class="ui-btn ui-shadow ui-corner-all ui-btn-a ui-mini">Save</a></div>
-            </div>
-        </form>
+            <input type="submit" id="submitButton" value="Ingresar">
 
-    </div><!-- /panel -->
+        </form>
+    </div>
+
+    <!-- Start of first page -->
+    <div data-role="page" id="page1">
+    
     <div role="main">
-        <div data-role="header" id="ruta">
-            <h3 style="margin-top:10px;">unidades</h3>
+        <div data-role="header" id="ruta" >
+            <h3 style="margin-top:10px;" >unidades</h3>
             <a href="#menu" data-role="button" data-inline="true" data-iconpos="notext" data-icon="bars"></a>
             <a href="#login" data-icon="gear" data-iconpos="notext"></a>
         </div><!-- /header -->
       
         
-        
+         <a data-role="button" onclick="app.filtrarPorUbicacion()" data-theme="e">Cercanos</a>
         <div id="content">
             <ul data-role="listview" data-filter="true"></ul>
         </div>
 
-        <div id="images"></div>
-     </div>   
+     </div>  
     
     </div>
     <!-- /page -->
@@ -115,10 +95,10 @@
                 </div>
                 
                 <div id="fidelizar" class="ui-body-d ui-content">
-                    <div id="fotos">
-                        <img  id="img" onclick="if(confirm('Desea eliminar esta foto?')) $(this).remove()" src="img/logo.png" data-inline="true"  class="foto"/>
-                    </div>                        
                     <a onclick="app.takePhoto()" data-role="button" data-inline="true" data-icon="camera">+ Foto</a>
+                    <div id="fotos">
+                    </div>                        
+
                 </div>
 
                 <div id="gestion" class="ui-body-d ui-content">
@@ -156,12 +136,29 @@
     </div>
 
 
+    <div data-role="panel" id="menu" data-position="left" data-display="overlay" data-dismissible="true">
+        <!-- panel content goes here -->
+        <a data-role="button" onclick="app.getList()" data-icon="search" data-iconpos="left" data-theme="b" >Obtener Ruta</a>
+        <a data-role="button" onclick="app.showMapa()" data-theme="e">Ver mapa</a> 
+        <a data-role="button" onclick="app.speak('hola')"data-theme="e">tts</a>
+        <a data-role="button" onclick="db = window.openDatabase('db','1','db','65535'); alert(db)"data-theme="e">db</a>        
+
+        <a data-role="button" data-rel="button" href="#config" data-icon="gear" data-iconpos="notext" ></a>
+        <a data-role="button" data-rel="close" href="#ruta" data-icon="delete" data-iconpos="notext" ></a>
+    </div>
 
         <script type="text/javascript" src="js/index.js"></script>
+        <script type="text/javascript" src="js/login.js"></script>
         <script type="text/javascript" src="phonegap.js"></script>
+        <script type="text/javascript" charset="utf-8" src="tts.js"></script>
 
         <script type="text/javascript">
             app.initialize();
+        </script>
+        <script>
+                deviceReady();
+                //checkPreAuth();
+
         </script>
 
     </body>

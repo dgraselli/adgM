@@ -119,10 +119,11 @@ button {
     height: 200px;
 }
 
-img.foto
+#fotos img
 {
     float: left;
     border: 1px solid black;
+    width: 10px;
 }
 
 a[data-role="button"] {

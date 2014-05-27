@@ -16,16 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-TEST = false;
+TEST = true;
 var host = 'http://192.168.0.180:3000';
 var host = "https://adgw.herokuapp.com/"
-//var host = 'http://localhost:3000';
+var host = 'http://localhost:3000';
 
 var URL = host+"/lecturas/pendientes.json";
 //var URL = "lecturas_pendientes.json";
 var URL_PARAM = host+"/parametricas";
 var URLPUT = host+"/update_lectura";
-var URLPUT_FOTO = host+= "/update_foto"
+var URLPUT_FOTO = host+"/update_foto";
 var URL_MAPA = host+"/mapa";
 
 var LAT = 0;
@@ -34,6 +34,7 @@ var DATA;
 var SELECTED_ID;
 var IMAGE_DATA;
 var IMAGE_URI;
+var DISTANCIA=[];
 
 var app = {
     // Application Constructor
@@ -70,6 +71,16 @@ var app = {
     inicializar: function()
     {
       $('#url').val(host);
+      r_ok = function (result) {
+          console.log(result);
+      };
+
+      r_fail=function(result) {
+          console.log("Error = " + result);
+      };
+
+      navigator.tts.startup(startupWin, fail);
+
     },
 
     waitStart: function(msg){
@@ -96,10 +107,19 @@ var app = {
 
     geoAndThen: function(func) {
 
+      app.waitStart('Obteniendo ubicacion');     
+      
       if (navigator.geolocation)
       {
           navigator.geolocation.getCurrentPosition(func);
-          app.waitStart('Obteniendo ubicacion');     
+      }
+      else
+      {
+        a = new object();
+        a.coords = new object();
+        a.cords.latitude = -34;
+        a.cords.longitude = -57;
+        func(a);
       }
 
     },
@@ -109,19 +129,17 @@ var app = {
         app.waitStop();
         app.waitStart('Obteniendo listado');
 
-
-        //url  = URL + "?lat="+ LAT + "&lng="+ LNG ;
-        //$('#log').html(url);
         url = URL;
 
         $("#content ul").empty();
 
-        console.log( url);
-
-        $.getJSON( url )
+        token = window.localStorage["remember_token"];
+        user  = window.localStorage["username"];
+        
+        $.getJSON( url, {remember_token: token, lecturista: user} )
           .done(function( data ) {
             app.vibrate();
-            //alert(data.length);
+
             DATA = data;
 
             if(data.length == 0)
@@ -129,15 +147,7 @@ var app = {
                 alert('No se encontraron unidades');
             }
 
-            $.each( data, function( i, item ) {
-                //$("#content ul").append('<li><a href="#page2" >'+item.texto+' - '+item.denominacion+'</a></li>');
-                $("#content ul").append('<li id="li_'+item.id+'"><a data-icon="arrow-r" onclick="app.select($(this))" val="'+i+'">'+item.usuario+' - '+item.razon_social+' - '+item.direccion+'</a></li>');
-                if ( i === 30 ) {
-                    return false;
-                }
-            });
-
-            $("#content ul").listview('refresh');
+            app.refreshList(data);
 
             $( ".selector" ).on( "panelclose", function( event, ui ) {
 
@@ -163,8 +173,21 @@ var app = {
 
     },
 
+    refreshList: function(data)
+    {
+        $("#content ul").empty();
+        $.each( data, function( i, item ) {
+                d = (DISTANCIA[item.id] != null)? DISTANCIA[item.id] : "";
+                $("#content ul").append('<li id="li_'+item.id+'"><a data-icon="arrow-r" onclick="app.select($(this))" val="'+i+'">'+item.medidor_tipo+'('+item.medidor_num+') <br> <small>'+item.razon_social+' - '+item.direccion+' ('+d+')</small></a></li>');
+                if ( i === 30 ) {
+                    return false;
+                }
+        });
+
+        $("#content ul").listview('refresh');
+    },
+
     select: function(item) {
-        $.mobile.changePage( "#page2", { transition: "slide"} );
         item = DATA[item.attr('val')];
         $('#unidad').html(item.usuario + ' - ' + item.razon_social);
         $('#incidencia').select(0);
@@ -174,6 +197,7 @@ var app = {
         IMAGE_DATA = null;
         IMAGE_URI = null;
         $('#fotos').empty();
+        $.mobile.changePage( "#page2", { transition: "slide"} );
     },
 
 
@@ -185,7 +209,7 @@ var app = {
     takePhoto: function(e) {
       if (navigator.camera)
       {
-        this.capture(Camera.PictureSourceType.CAMERA);
+        app.capture();
       }
       else
       {
@@ -202,10 +226,10 @@ var app = {
     },
 
         // capture either new or existing photo:
-    capture: function(sourceType) {
-          navigator.camera.getPicture(this.onCaptureSuccess, this.onCaptureFail, {
+    capture: function() {
+          navigator.camera.getPicture(app.onCaptureSuccess, app.onCaptureFail, {
             destinationType: Camera.DestinationType.FILE_URI,
-            sourceType: sourceType,
+            sourceType: Camera.PictureSourceType.CAMERA,
             targetWidth: 300,
             correctOrientation: true
           });
@@ -241,9 +265,8 @@ var app = {
         return params;
     },
 
-    updateDataSinFoto: function(){
-        params = app.getParams();
-        //alert(params);
+    uploadLectura: function(params){
+
         $.ajax({
           type: 'POST',
           url: URLPUT,
@@ -260,6 +283,16 @@ var app = {
           dataType: 'json',
         });
 
+
+
+      if($('#fotos img'))
+      {
+        $('#fotos img').each(function (i, img){
+          app.uploadFoto($(img).attr('src'), "Foto_"+i, params);
+        }); 
+
+      }
+
     },
 
     updateData: function(){
@@ -267,10 +300,10 @@ var app = {
     },
 
 
-    uploadFoto: function (imageURI, vImage) {
+    uploadFoto: function (imageURI, vImage, params) {
       if (TEST) return;
 
-      result_ok = function result_ok(r) {
+      result_ok = function (r) {
          console.log("Code = " + r.responseCode);
          console.log("Response = " + r.response);
          //alert($.parseJSON(r.response))    
@@ -279,7 +312,7 @@ var app = {
          
           }
 
-      result_fail = function result_fail(error) {
+      result_fail = function (error) {
         console.log("Response = " +  error.code);
 
         //marcar para intentar luego
@@ -290,10 +323,10 @@ var app = {
        /* Image Upload Start */
       var ft = new FileTransfer();                     
       var options = new FileUploadOptions();                      
-      options.fileKey= vImage;                      
+      options.fileKey= "file";                      
       options.fileName=imagefile.substr(imagefile.lastIndexOf('/')+1);
       options.mimeType="image/jpeg";  
-      options.params = app.getParams();
+      options.params = params;
       options.chunkedMode = false;      
       ft.upload(imagefile, URLPUT_FOTO, result_ok, result_fail, options);   
      },
@@ -303,30 +336,11 @@ var app = {
       {  
         LAT = position.coords.latitude;
         LNG = position.coords.longitude;
-        
-        if(IMAGE_URI == null){
-            return app.updateDataSinFoto();
-        }
+                
+        params = app.getParams();
+        app.uploadLectura(params);
  
-      app.waitStart('Subiendo datos');
-      var fail, ft, options, params, win;
-      // callback for when the photo has been successfully uploaded:
-
       
-        
-      if($('#fotos img'))
-      {
-        app.waitStart('Actualizando datos');
-        $('#fotos img').each(function (i, img){
-          app.uploadFoto($(img).attr('src'), "Foto_"+i);
-        }); 
-
-      }
-
-      //listo
-      app.waitStop();
-      $('#li_'+SELECTED_ID).remove();
-      $.mobile.changePage( "#page1", { transition: "slide", referse: true} );
 
                  
       }
@@ -337,6 +351,72 @@ var app = {
         alert(e.msg);
       }
     },
+
+    distancia: function (lat1,lon1, lat2, lon2, unit = "M")
+    {
+      var radlat1 = Math.PI * lat1/180;
+      var radlat2 = Math.PI * lat2/180;
+      var radlon1 = Math.PI * lon1/180;
+      var radlon2 = Math.PI * lon2/180;
+      var theta = lon1-lon2;
+      var radtheta = Math.PI * theta/180;
+      var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+      dist = Math.acos(dist);
+      dist = dist * 180/Math.PI;
+      dist = dist * 60 * 1.1515;
+      if (unit=="K") { dist = dist * 1.609344; }
+      if (unit=="M") { dist = dist * 1.609344 * 1000; }
+      if (unit=="N") { dist = dist * 0.8684; }
+      return dist;
+    },
+
+    filtrarPorUbicacion: function()
+    {
+        app.geoAndThen(app.do_filtrarPorUbicacion);
+    },
+
+    do_filtrarPorUbicacion: function(position)
+    {
+        app.waitStop();
+
+        LAT = position.coords.latitude;
+        LNG = position.coords.longitude;
+
+        items_dinstancia = [];
+        DISTANCIA = [];
+        $.each( DATA, function( i, item ) {
+          distancia = app.distancia(LAT, LNG, item.lat, item.lon, "M");
+          distancia = Math.round(distancia);
+          items_dinstancia.push( {"id":item.id, "distancia": distancia} );
+          DISTANCIA[item.id] = distancia;
+        });
+
+        items_dinstancia.sort(function(a,b){
+          return (a.distancia - b.distancia);
+        });
+
+
+        data = [];
+        for(i=0; i<9; i++)
+        {
+          data.push(app.getItem( items_dinstancia[i].id ));
+        }
+
+
+        app.refreshList(data);
+        
+        
+    },
+
+    getItem: function(id)
+    {
+      $.each(DATA, function(i, v) {
+        if (parseInt(id) == parseInt(v.id)) { res=v; return false;}
+      });
+      
+      return res;
+    },
+
 
     saveSetting: function()
     {
@@ -388,5 +468,17 @@ var app = {
                     alert("Could not retrieve the supported languages : " + error);
                 });
     },
+
+    speak: function(text)
+    {
+      alert(text);
+      alert(navigator.tts);
+      alert(window.plugins);
+
+      cb_ok = function(o){alert("ok:"+o)}
+      cb_fail= function(o){alert("fail:"+o)}
+      navigator.tts.speak(text, cb_ok, cb_fail);
+      alert(text + text);
+    }
 
 };
