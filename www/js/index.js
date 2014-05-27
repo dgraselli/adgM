@@ -23,7 +23,7 @@ var host = 'http://localhost:3000';
 
 var URL = host+"/lecturas/pendientes.json";
 //var URL = "lecturas_pendientes.json";
-var URL_PARAM = host+"/parametricas";
+var URL_PARAM = host+"/incidencias.json";
 var URLPUT = host+"/update_lectura";
 var URLPUT_FOTO = host+"/update_foto";
 var URL_MAPA = host+"/mapa";
@@ -35,6 +35,7 @@ var SELECTED_ID;
 var IMAGE_DATA;
 var IMAGE_URI;
 var DISTANCIA=[];
+var ARR_INCIDENCIAS = [];
 
 var app = {
     // Application Constructor
@@ -79,7 +80,29 @@ var app = {
           console.log("Error = " + result);
       };
 
-      navigator.tts.startup(startupWin, fail);
+      //navigator.tts.startup(r_ok, r_fail);
+
+      token = window.localStorage["remember_token"];
+      $.getJSON( URL_PARAM , {remember_token: token })
+          .done(function( data ) {
+             if(data.length == 0)
+            {
+                alert('No se encontraron incidencias');
+            }
+            INCIDENCIAS = data;
+            $.each( data, function( i, item ) {
+                $("#incidencias ul").append('<li><input type="checkbox" name="incidencia" id ="chk_'+item.id+'" value="'+item.id+'" " /><label for="chk_'+item.id+'" style="display:inline-block;">'+item.nombre+'</label></li>');
+                if ( i === 30 ) {
+                    return false;
+                }
+            });
+            $("#incidencias ul").listview('refresh');
+          })
+          .fail(function (o) { alert(o)});
+    
+
+
+
 
     },
 
@@ -198,9 +221,49 @@ var app = {
         IMAGE_URI = null;
         $('#fotos').empty();
         $.mobile.changePage( "#page2", { transition: "slide"} );
-    },
+    
 
+        $('#img').attr('src', 'img/logo.png');
+        $("#datos_unidad ul").empty();
+        $("#datos_unidad ul").append('<li id="li_doc"><a href="#cambioDoc" data-rel="dialog">Doc.: <strong>'+item.doc_tipo +' ' + item.doc_nro+'</strong></a></li>');
+        
+        var dir = item.calle + ' Nro ' + item.altura;
+        if(item.piso!=null) dir += ' Piso ' + item.piso;
+        if(item.dpto!=null) dir += ' Depto ' + item.dpto;
+        if(item.datos_comp!=null) dir += ' ' + item.datos_comp;
+        dir += ' CP ' + item.cp;
+        $("#datos_unidad ul").append('<li id="li_dir"><a href="#cambioDir" data-rel="dialog">Dir.: <strong>'+dir+'</strong></a></li>');
+        
+        var telefono = "-";
+        if(item.telefono!=null) telefono = item.telefono;
+        $("#datos_unidad ul").append('<li id="li_tel"><a href="#cambioTel" data-rel="dialog">Tel.: <strong>'+telefono+'</strong></a></li>');
+        
+        $("#datos_unidad ul").listview('refresh');
 
+        if(item.deuda!= undefined)
+        {
+          $("#deuda").html('$ ' + item.deuda.monto.toFixed(2));
+          
+          $("#opciones fieldset").empty();
+          for(var i=0 ; i<item.deuda.planes.length ; i++)
+          {          
+            $("#opciones fieldset").append('<input type="radio" name="radio-choice" id="radio-choice-' + item.deuda.planes[i].id + '" value="'+item.deuda.planes[i].id+'" />');
+            $("#opciones fieldset").append('<label for="radio-choice-'+item.deuda.planes[i].id+'">' + item.deuda.planes[i].desc + '</label>');
+          }
+          $("#opciones").trigger('create');
+         // $("#gestion ul").listview('refresh');
+        }
+
+        $("#div_mapa").load(URL_MAPA.replace("$ID",item.id));
+        //$("#div_mapa").trigger('create');
+
+      },
+
+doAceptarDoc: function(){
+ alert($("#fidelizar li[id='li_doc']").attr("html"));
+$("#cambioDoc").close();
+//meter la modificacion en un array de cambios
+},
     useExistingPhoto: function(e) {
           this.capture(Camera.PictureSourceType.SAVEDPHOTOALBUM);
         },
@@ -259,7 +322,12 @@ var app = {
           valor: $('#iptlectura').val(),
           fh: dNow,
           lat: LAT,
-          lng: LNG
+          lng: LNG,
+          incidencias: null, //array de incidencias {id,dato,valor}
+          cambios:null,  //array de cambios
+          id_plan:null,
+          remember_token: window.localStorage["remember_token"]
+ 
         };
 
         return params;
@@ -425,7 +493,7 @@ var app = {
         app.waitStart('Guardando datos');
         host = $('#url').val();
         URL = "http://"+host+"/lecturas/pendientes";
-        URL_PARAM = "http://"+host+"/parametricas";
+        URL_PARAM = "http://"+host+"/incidencias.json";
          URLPUT  = "http://"+host+"/update_lectura";
          URL_MAPA ="http://"+host+"/mapa";
 

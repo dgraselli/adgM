@@ -34,6 +34,19 @@
     <!-- Start of first page -->
     <div data-role="page" id="page1">
     
+
+        <div data-role="panel" id="menu" data-position="left" data-display="overlay" data-dismissible="true">
+                <!-- panel content goes here -->
+                <a data-role="button" onclick="app.getList()" data-icon="search" data-iconpos="left" data-theme="b" >Obtener Ruta</a>
+                <a data-role="button" onclick="app.showMapa()" data-theme="e">Ver mapa</a> 
+                <a data-role="button" onclick="app.speak('hola')"data-theme="e">tts</a>
+                <a data-role="button" onclick="db = window.openDatabase('db','1','db','65535'); alert(db)"data-theme="e">db</a>        
+
+                <a data-role="button" data-rel="button" href="#config" data-icon="gear" data-iconpos="notext" ></a>
+                <a data-role="button" data-rel="close" href="#ruta" data-icon="delete" data-iconpos="notext" ></a>
+            </div>
+
+
     <div role="main">
         <div data-role="header" id="ruta" >
             <h3 style="margin-top:10px;" >unidades</h3>
@@ -66,50 +79,48 @@
                 <ul>
                 <li><a href="#lectura" data-ajax="false">Lectura</a></li>
                 <li><a href="#fidelizar" data-ajax="false">Fidelizar</a></li>
-                <li><a href="#gestion" data-ajax="false">Gestion</a></li>
+                <li><a href="#gestion" data-ajax="false" id="solapa_gestion">Gestion</a></li>
+                <li><a href="#mapa" data-ajax="false" id="solapa_gestion">Mapa</a></li>
                 </ul>
                 </div>
   
                 <div id="lectura" class="ui-body-d ui-content">
-                    
-                     <div class="input-group">
-                      <input type="number" name="lectura" id="iptlectura" placeholder="Ingrese Lectura" pattern="[0-9]*" class="form-control"/> 
-                      <span class="input-group-btn">
-                        <button onclick="app.recognizeSpeech()" class="btn btn-default" type="button">
-                        Dictar !
-                        </button>
-                      </span>
-                    </div>
+                    <fieldset class="ui-grid-a">
+                        <div class="ui-block-a" style="width:70%;">
+                            <input type="number" name="lectura" id="iptlectura" placeholder="Ingrese Lectura" pattern="[0-9]*" style="font-size:40px;text-align: center;" />
+                        </div>
+                        <div class="ui-block-b" style="width:30%;height:100px;">
+                            <a data-role="button" data-icon="audio" onclick="app.recognizeSpeech()" data-iconpos="notext" style="width: 80px; height: 80px;"></a>
+                        </div>
+                    </fieldset>
                         
                  <!-- <button onclick="app.getSupportedLanguages();">Get Supported Languages</button> -->
 
-                   <fieldset data-role="controlgroup" id="incidencias">
-                        <legend>Incidencias</legend>
-                        <input type="checkbox" name="incidencia" id ="checkbox-normal" value="1">
-                        <label for="checkbox-normal">Normal</label>
-                        <input type="checkbox" name="incidencia" id="checkbox-tapado"  value="2">
-                        <label for="checkbox-tapado">Medidor Tapado</label>
-                        <input type="checkbox" name="incidencia" id="checkbox-oculto"  value="3">
-                        <label for="checkbox-oculto">Medidor Oculto</label>
-                    </fieldset>
+                   <div data-role="content" id="incidencias">
+                     <h3>Incidencias</h3>
+                         <ul data-role="listview" data-filter="true" data-inset="true"></ul>
+                    </div>
+
                 </div>
                 
                 <div id="fidelizar" class="ui-body-d ui-content">
+                    <div data-role="content" id="datos_unidad">
+                         <ul data-role="listview" data-inset="true"> </ul>                   
+                    </div>            
                     <a onclick="app.takePhoto()" data-role="button" data-inline="true" data-icon="camera">+ Foto</a>
-                    <div id="fotos">
-                    </div>                        
+                    <div id="fotos"></div>
                 </div>
-                
-
-                <div id="gestion" class="ui-body-d ui-content">
-                   <h1> Gestion</h1>
-                    <ul data-role="listview" data-inset="true">
-                    <li><a href="#">Acura</a></li>
-                    <li><a href="#">Audi</a></li>
-                    <li><a href="#">BMW</a></li>
-                    <li><a href="#">Cadillac</a></li>
-                    <li><a href="#">Ferrari</a></li>
-                    </ul>
+                <div id="gestion" class="ui-body-d ui-content" data-role="content">
+                   <h2> Deuda Actual: <div id="deuda" style="color:red;"></div></h2>
+                  
+                   <div data-role="fieldcontain" id="opciones">
+                        <fieldset data-role="controlgroup">
+                        </fieldset>
+                   </div>
+                   
+                </div>
+                <div id="mapa" class="ui-body-d ui-content">
+                    <div id="div_mapa" style="width: 200px; height: 200px;" data-role="content"></div>                     
                 </div>
                  <a data-role="button" onclick="app.updateData()" data-icon="check" data-iconpos="right" data-theme="b" data-inline="false">Guardar</a>
             </div>
@@ -134,19 +145,46 @@
             </div>
         </div>
     </div>
+<div data-role="page" id="cambioDoc">
+        <div data-role="header" id="doc_title">
+            <h1>Cambio Documento</h1>
+        </div>
 
+        <div data-role="content" align="center">
+             <label for="iptDoc">Documento</label>
+             <input type="text" name="iptDoc" id="iptDoc" placeholder="Documento"/> 
+             <input type="button" name="aceptarDoc" id="aceptarDoc" onclick="app.doAceptarDoc();" value="Aceptar"/> 
+             
+        </div>
 
-    <div data-role="panel" id="menu" data-position="left" data-display="overlay" data-dismissible="true">
-        <!-- panel content goes here -->
-        <a data-role="button" onclick="app.getList()" data-icon="search" data-iconpos="left" data-theme="b" >Obtener Ruta</a>
-        <a data-role="button" onclick="app.showMapa()" data-theme="e">Ver mapa</a> 
-        <a data-role="button" onclick="app.speak('hola')"data-theme="e">tts</a>
-        <a data-role="button" onclick="db = window.openDatabase('db','1','db','65535'); alert(db)"data-theme="e">db</a>        
+</div>
+<div data-role="page" id="cambioDir">
+        <div data-role="header" id="doc_title">
+            <h1>Cambio Direccion</h1>
+        </div>
 
-        <a data-role="button" data-rel="button" href="#config" data-icon="gear" data-iconpos="notext" ></a>
-        <a data-role="button" data-rel="close" href="#ruta" data-icon="delete" data-iconpos="notext" ></a>
-    </div>
+        <div data-role="content" align="center">
+             <label for="iptDir">Direccion</label>
+             <input type="text" name="iptDir" id="iptDir" placeholder="Direccion"/> 
+             <input type="button" name="aceptarDir" id="aceptarDir" onclick="app.doAceptarDir();" value="Aceptar"/> 
+             
+        </div>
 
+</div>
+
+<div data-role="page" id="cambioTel">
+        <div data-role="header" id="doc_title">
+            <h1>Cambio Telefono</h1>
+        </div>
+
+        <div data-role="content" align="center">
+             <label for="iptTel">Telefono</label>
+             <input type="text" name="iptTel" id="iptTel" placeholder="Telefono"/> 
+             <input type="button" name="aceptarTel" id="aceptarTel" onclick="app.doAceptarTel();" value="Aceptar"/> 
+             
+        </div>
+
+</div>
         <script type="text/javascript" src="js/index.js"></script>
         <script type="text/javascript" src="js/login.js"></script>
         <script type="text/javascript" src="phonegap.js"></script>
