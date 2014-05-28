@@ -216,14 +216,13 @@
     
     _previousStatusBarStyle = [UIApplication sharedApplication].statusBarStyle;
     
-    CDVInAppBrowserNavigationController* nav = [[CDVInAppBrowserNavigationController alloc]
+    UINavigationController* nav = [[UINavigationController alloc]
                                    initWithRootViewController:self.inAppBrowserViewController];
-    nav.orientationDelegate = self.inAppBrowserViewController;
     nav.navigationBarHidden = YES;
     // Run later to avoid the "took a long time" log message.
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self.inAppBrowserViewController != nil) {
-            [self.viewController presentViewController:nav animated:YES completion:nil];
+            [self.viewController presentModalViewController:nav animated:YES];
         }
     });
 }
@@ -489,6 +488,7 @@
     self.webView.clearsContextBeforeDrawing = YES;
     self.webView.clipsToBounds = YES;
     self.webView.contentMode = UIViewContentModeScaleToFill;
+    self.webView.contentStretch = CGRectFromString(@"{{0, 0}, {1, 1}}");
     self.webView.multipleTouchEnabled = YES;
     self.webView.opaque = YES;
     self.webView.scalesPageToFit = NO;
@@ -501,6 +501,7 @@
     self.spinner.clearsContextBeforeDrawing = NO;
     self.spinner.clipsToBounds = NO;
     self.spinner.contentMode = UIViewContentModeScaleToFill;
+    self.spinner.contentStretch = CGRectFromString(@"{{0, 0}, {1, 1}}");
     self.spinner.frame = CGRectMake(454.0, 231.0, 20.0, 20.0);
     self.spinner.hidden = YES;
     self.spinner.hidesWhenStopped = YES;
@@ -528,6 +529,7 @@
     self.toolbar.clearsContextBeforeDrawing = NO;
     self.toolbar.clipsToBounds = NO;
     self.toolbar.contentMode = UIViewContentModeScaleToFill;
+    self.toolbar.contentStretch = CGRectFromString(@"{{0, 0}, {1, 1}}");
     self.toolbar.hidden = NO;
     self.toolbar.multipleTouchEnabled = NO;
     self.toolbar.opaque = NO;
@@ -546,16 +548,15 @@
     self.addressLabel.clearsContextBeforeDrawing = YES;
     self.addressLabel.clipsToBounds = YES;
     self.addressLabel.contentMode = UIViewContentModeScaleToFill;
+    self.addressLabel.contentStretch = CGRectFromString(@"{{0, 0}, {1, 1}}");
     self.addressLabel.enabled = YES;
     self.addressLabel.hidden = NO;
     self.addressLabel.lineBreakMode = NSLineBreakByTruncatingTail;
-    
-    if ([self.addressLabel respondsToSelector:NSSelectorFromString(@"setMinimumScaleFactor:")]) {
-        [self.addressLabel setValue:@(10.0/[UIFont labelFontSize]) forKey:@"minimumScaleFactor"];
-    } else if ([self.addressLabel respondsToSelector:NSSelectorFromString(@"setMinimumFontSize:")]) {
-        [self.addressLabel setValue:@(10.0) forKey:@"minimumFontSize"];
+    if (IsAtLeastiOSVersion(@"6.0")) {
+        self.addressLabel.minimumScaleFactor = 10.0/[UIFont labelFontSize];
+    } else {
+        self.addressLabel.minimumFontSize = 10.000;
     }
-    
     self.addressLabel.multipleTouchEnabled = NO;
     self.addressLabel.numberOfLines = 1;
     self.addressLabel.opaque = NO;
@@ -745,7 +746,7 @@
         if ([self respondsToSelector:@selector(presentingViewController)]) {
             [[self presentingViewController] dismissViewControllerAnimated:YES completion:nil];
         } else {
-            [[self parentViewController] dismissViewControllerAnimated:YES completion:nil];
+            [[self parentViewController] dismissModalViewControllerAnimated:YES];
         }
     });
 }
@@ -962,38 +963,5 @@
 
     return obj;
 }
-
-@end
-
-@implementation CDVInAppBrowserNavigationController : UINavigationController
-
-#pragma mark CDVScreenOrientationDelegate
-
-- (BOOL)shouldAutorotate
-{
-    if ((self.orientationDelegate != nil) && [self.orientationDelegate respondsToSelector:@selector(shouldAutorotate)]) {
-        return [self.orientationDelegate shouldAutorotate];
-    }
-    return YES;
-}
-
-- (NSUInteger)supportedInterfaceOrientations
-{
-    if ((self.orientationDelegate != nil) && [self.orientationDelegate respondsToSelector:@selector(supportedInterfaceOrientations)]) {
-        return [self.orientationDelegate supportedInterfaceOrientations];
-    }
-    
-    return 1 << UIInterfaceOrientationPortrait;
-}
-
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    if ((self.orientationDelegate != nil) && [self.orientationDelegate respondsToSelector:@selector(shouldAutorotateToInterfaceOrientation:)]) {
-        return [self.orientationDelegate shouldAutorotateToInterfaceOrientation:interfaceOrientation];
-    }
-    
-    return YES;
-}
-
 
 @end

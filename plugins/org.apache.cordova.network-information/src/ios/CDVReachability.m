@@ -205,7 +205,7 @@ static void CDVReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkRe
         return NotReachable;
     }
 
-    NetworkStatus retVal = NotReachable;
+    BOOL retVal = NotReachable;
 
     if ((flags & kSCNetworkReachabilityFlagsConnectionRequired) == 0) {
         // if target host is reachable and no connection is required
