@@ -91,7 +91,7 @@ var app = {
             }
             INCIDENCIAS = data;
             $.each( data, function( i, item ) {
-                $("#incidencias ul").append('<li><input type="checkbox" name="incidencia" id ="chk_'+item.id+'" value="'+item.id+'" " /><label for="chk_'+item.id+'" style="display:inline-block;">'+item.nombre+'</label></li>');
+                $("#incidencias ul").append('<li><input type="checkbox" name="incidencia" id ="chk_'+item.id+'" value="'+item.id+'" onclick="app.myFnc(this)" /><label for="chk_'+item.id+'" style="display:inline-block;">'+item.nombre+'</label></li>');
                 if ( i === 30 ) {
                     return false;
                 }
@@ -102,6 +102,44 @@ var app = {
     
 
 
+
+
+    },
+
+        addIncidencia: function(pId_inc, pDato, pValor){
+      var incid = {
+          id: pId_inc,
+          dato: pDato,
+          valor: pValor
+        };
+        ARR_INCIDENCIAS.push(incid);
+    },
+    
+    myFnc: function(p)
+    {
+      var id_incidencia = $(p).attr("value");
+     
+      var dato_req = "";
+      var reg_exp = "";
+      var valor;
+      $.each( INCIDENCIAS, function( i, item ) {
+         if(item.id == id_incidencia)
+         {
+            if((item.dato_requerido)!=null)
+            {
+//alert(1);
+                dato_req = item.dato_requerido;
+                valor = prompt(dato_req);
+               // alert(valor);
+            }
+            else
+            {
+                dato_req = null;
+                valor = null;
+            }
+            app.addIncidencia(id_incidencia, dato_req, valor);  
+         }
+       });
 
 
     },
