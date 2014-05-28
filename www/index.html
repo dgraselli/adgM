@@ -1,4 +1,22 @@
 <!DOCTYPE html>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+     KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+-->
 <html>
     <head>
         <meta charset="utf-8" />
@@ -6,7 +24,9 @@
         <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
 
+
         <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.css" />
+        <link rel="stylesheet" href="css/index.css" />
         
         <script src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
         <script src="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.js"></script>
@@ -15,43 +35,48 @@
     </head>
     <body>
 
+
+
     <div data-role="page" id="loginPage">
+        <div data-role="header"  >
+            <h3 style="margin-top:10px;" >Ingresar</h3>
+            <a href="#config" data-role="button" data-inline="true" data-iconpos="notext" data-icon="bars"></a>
+        </div><!-- /header -->
+      
+        <div role="main">
             <form id="loginForm" class="userform" >
 
-            <h2>Login</h2>
+                <input type="text" placeholder="Usuario" name="name" id="username" >
 
-            <label for="name">Usuario:</label>
-            <input type="text" name="name" id="username" value="" data-clear-btn="true" data-mini="true">
+                <input type="password" placeholder="Contraseña" name="password" id="password" >
 
-            <label for="password">Password:</label>
-            <input type="password" name="password" id="password" value="" data-clear-btn="true" autocomplete="off" data-mini="true">
+                <input type="submit" id="submitButton" value="Ingresar">
 
-            <input type="submit" id="submitButton" value="Ingresar">
+            </form>
 
-        </form>
+            <button onclick="alert(app); app.initialize();">TEST</button>
+        </div>
+
     </div>
+    
 
     <!-- Start of first page -->
     <div data-role="page" id="page1">
     
-
-        <div data-role="panel" id="menu" data-position="left" data-display="overlay" data-dismissible="true">
+        <div data-role="panel" id="menu" data-position="left" data-display="reveal" data-dismissible="true">
                 <!-- panel content goes here -->
-                <a data-role="button" onclick="app.getList()" data-icon="search" data-iconpos="left" data-theme="b" >Obtener Ruta</a>
+                <a data-role="button" onclick="app.getList()" data-icon="search" data-iconpos="left" data-theme="b" >Bajar</a>
                 <a data-role="button" onclick="app.showMapa()" data-theme="e">Ver mapa</a> 
                 <a data-role="button" onclick="app.speak('hola')"data-theme="e">tts</a>
-                <a data-role="button" onclick="db = window.openDatabase('db','1','db','65535'); alert(db)"data-theme="e">db</a>        
 
-                <a data-role="button" data-rel="button" href="#config" data-icon="gear" data-iconpos="notext" ></a>
-                <a data-role="button" data-rel="close" href="#ruta" data-icon="delete" data-iconpos="notext" ></a>
-            </div>
+                <a data-role="button" data-rel="button" href="#config" data-icon="gear" >Opciones</a>
+        </div>
 
 
     <div role="main">
         <div data-role="header" id="ruta" >
             <h3 style="margin-top:10px;" >unidades</h3>
             <a href="#menu" data-role="button" data-inline="true" data-iconpos="notext" data-icon="bars"></a>
-            <a href="#login" data-icon="gear" data-iconpos="notext"></a>
         </div><!-- /header -->
       
         
@@ -64,6 +89,7 @@
     
     </div>
     <!-- /page -->
+
 
 
     <!-- Start page -->
@@ -80,7 +106,8 @@
                 <li><a href="#lectura" data-ajax="false">Lectura</a></li>
                 <li><a href="#fidelizar" data-ajax="false">Fidelizar</a></li>
                 <li><a href="#gestion" data-ajax="false" id="solapa_gestion">Gestion</a></li>
-                <li><a href="#mapa" data-ajax="false" id="solapa_gestion">Mapa</a></li>
+                <li><a href="#mapa" data-ajax="false" id="solapa_mapa" onclick="app.loadMapa()">Mapa</a></li>
+                <li><a href="#d_fotos" data-ajax="false" id="solapa_fotos" onclick="app.loadFotos()">Fotos</a></li>
                 </ul>
                 </div>
   
@@ -120,8 +147,12 @@
                    
                 </div>
                 <div id="mapa" class="ui-body-d ui-content">
-                    <div id="div_mapa" style="width: 200px; height: 200px;" data-role="content"></div>                     
+                    <div id="div_mapa"></div>
                 </div>
+                <div id="d_fotos" class="ui-body-d ui-content">
+                    <div id="div_fotos"></div>
+                </div>
+
                  <a data-role="button" onclick="app.updateData()" data-icon="check" data-iconpos="right" data-theme="b" data-inline="false">Guardar</a>
             </div>
         </div>
@@ -130,21 +161,24 @@
 
     <!-- Start page -->
     <div data-role="page" id="config">
-        <div data-role="header" id="unidad_title">
-            <h1 id="Configuración"></h1>
+        <div data-role="header"  >
+            <h3 style="margin-top:10px;" >Configuracion</h3>
             <a data-role="button" data-rel="back" data-icon="arrow-l" data-iconpos="notext"  data-inline="false"></a>
-        </div>
+        </div><!-- /header -->
 
         <div data-role="content" align="center">
              <div class="ui-field-contain">
                 <div class="ui-body-d ui-content">
                     <label for="url">Url</label>
                     <input type="text" name="url" id="url" placeholder="URL"/> 
+
+                    Version <div id="version"></div>
                 </div>
                  <a data-role="button" onclick="app.saveSetting()" data-icon="check" data-iconpos="right" data-theme="b" data-inline="false">Guardar</a>
             </div>
         </div>
     </div>
+
 <div data-role="page" id="cambioDoc">
         <div data-role="header" id="doc_title">
             <h1>Cambio Documento</h1>
@@ -186,25 +220,12 @@
 
 </div>
 
-<div data-role="page" id="dato_req">
-  <div data-role="header">
-    <h1>Ingrese el dato</h1>
-  </div>    
-  <div data-role="content" id="text">
-  </div>    
-</div>
-        <script type="text/javascript" src="js/index.js"></script>
-        <script type="text/javascript" src="js/login.js"></script>
         <script type="text/javascript" src="phonegap.js"></script>
-        <script type="text/javascript" charset="utf-8" src="tts.js"></script>
+        <script type="text/javascript" src="js/remote.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
 
         <script type="text/javascript">
             app.initialize();
-        </script>
-        <script>
-                deviceReady();
-                //checkPreAuth();
-
         </script>
 
     </body>

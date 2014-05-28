@@ -16,21 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-TEST = true;
-var host = 'http://192.168.0.180:3000';
-var host = "https://adgw.herokuapp.com/"
-var host = 'http://localhost:3000';
 
-var URL = host+"/lecturas/pendientes.json";
-//var URL = "lecturas_pendientes.json";
-var URL_PARAM = host+"/incidencias.json";
-var URLPUT = host+"/update_lectura";
-var URLPUT_FOTO = host+"/update_foto";
-var URL_MAPA = host+"/mapa";
 
-var LAT = 0;
-var LNG = 0;
-var DATA;
+
+
+var TEST = false;
+//var HOST = "http://localhost:3000";
+var HOST = "https://adgw.herokuapp.com";
+
+Remote.init(HOST);
+DB.init();
+var Version=2;
+
+
+//-----------------------------------------------
+
+
 var SELECTED_ID;
 var IMAGE_DATA;
 var IMAGE_URI;
@@ -40,8 +41,9 @@ var ARR_INCIDENCIAS = [];
 var app = {
     // Application Constructor
     initialize: function() {
+        alert(2);
         this.bindEvents();
-        this.inicializar();
+        app.inicializar();
     },
     // Bind Event Listeners
     //
@@ -71,7 +73,10 @@ var app = {
 
     inicializar: function()
     {
-      $('#url').val(host);
+        alert(Remote);
+        alert(Remote.HOST);
+      $('#url').val( Remote.HOST );
+      $('#version').html( Version );
       r_ok = function (result) {
           console.log(result);
       };
@@ -79,6 +84,18 @@ var app = {
       r_fail=function(result) {
           console.log("Error = " + result);
       };
+
+      $('#loginForm').on('submit', app.handleLogin);
+
+      if( Remote.rememberLogin() )
+      {
+        $.mobile.navigate( "#page1" );
+        app.createSalirBtn();
+      }
+      else
+      {
+        $.mobile.navigate( "#loginPage" );
+      }
 
       //navigator.tts.startup(r_ok, r_fail);
 
@@ -99,11 +116,47 @@ var app = {
             $("#incidencias ul").listview('refresh');
           })
           .fail(function (o) { alert(o)});
-    
 
 
+    },
 
+    createSalirBtn: function()
+    {
+        $('<a/>' , {
+          'id': 'btnSalir',
+          'href' : '#loginPage',
+          'class': 'ui-btn ui-shadow'
+        }).text('Salir').on('click', app.handleLogout).appendTo('#menu');
+    },
 
+    handleLogin: function()
+    { 
+      var form = $("#loginForm");    
+      //$("#submitButton",form).attr("disabled","disabled");
+      var u = $("#username", form).val();
+      var p = $("#password", form).val();
+
+      login_ok = function(){
+
+        $.mobile.navigate( "#page1" );
+        $("#submitButton").removeAttr("disabled");
+
+        app.createSalirBtn();
+
+      }
+
+      login_fail = function(msg){
+        alert("Error al login "+msg);
+        $("#submitButton").removeAttr("disabled");
+      }
+
+      Remote.login(u,p, login_ok, login_fail);
+      return false;
+    },
+    handleLogout: function()
+    {
+      Remote.logout();
+      $("#btnSalir").remove();
     },
 
         addIncidencia: function(pId_inc, pDato, pValor){
@@ -157,7 +210,8 @@ var app = {
     },
 
     vibrate: function() {
-        //navigator.notification.vibrate(2000);
+        if(navigator.notification)
+            navigator.notification.vibrate(2000);
     },
 
     showMapa: function(){
@@ -185,71 +239,67 @@ var app = {
 
     },
 
-
-    getList: function() {
-        app.waitStop();
-        app.waitStart('Obteniendo listado');
-
-        url = URL;
-
-        $("#content ul").empty();
-
-        token = window.localStorage["remember_token"];
-        user  = window.localStorage["username"];
-        
-        $.getJSON( url, {remember_token: token, lecturista: user} )
-          .done(function( data ) {
-            app.vibrate();
-
-            DATA = data;
-
+    refreshIncidencias: function()
+    {
+            data = DB.get("INCIDENCIAS");
+            
             if(data.length == 0)
             {
-                alert('No se encontraron unidades');
+                alert('No se encontraron incidencias');
             }
-
-            app.refreshList(data);
-
-            $( ".selector" ).on( "panelclose", function( event, ui ) {
-
-            });
-            app.waitStop();
- 
-          })
-          .fail(function( jqxhr, textStatus, error ) {
-              var err = textStatus + ', ' + error + jqxhr;
-              alert(err);
-              console.log( "Request Failed: " + err);
-              xhr = jqxhr;
-              console.log("readyState: " + xhr.readyState);
-              console.log("responseText: "+ xhr.responseText);
-              console.log("status: " + xhr.status);
-              console.log("text status: " + textStatus);
-              console.log("error: " + error);
-
-              app.waitStop();
-            });
-
-
-
-    },
-
-    refreshList: function(data)
-    {
-        $("#content ul").empty();
-        $.each( data, function( i, item ) {
-                d = (DISTANCIA[item.id] != null)? DISTANCIA[item.id] : "";
-                $("#content ul").append('<li id="li_'+item.id+'"><a data-icon="arrow-r" onclick="app.select($(this))" val="'+i+'">'+item.medidor_tipo+'('+item.medidor_num+') <br> <small>'+item.razon_social+' - '+item.direccion+' ('+d+')</small></a></li>');
+            INCIDENCIAS = data;
+            $.each( data, function( i, item ) {
+                $("#incidencias ul").append('<li><input type="checkbox" name="incidencia" id ="chk_'+item.id+'" value="'+item.id+'" " /><label for="chk_'+item.id+'" style="display:inline-block;">'+item.nombre+'</label></li>');
                 if ( i === 30 ) {
                     return false;
                 }
-        });
+            });
+            $("#incidencias ul").listview('refresh');
 
-        $("#content ul").listview('refresh');
     },
 
+    refreshLecturas: function()
+    {
+      app.vibrate();
+      
+      app.waitStop();
+
+      data = DB.get("LECTURAS");
+
+      if(data.length == 0)
+      {
+        alert('No se encontraron unidades');
+      }
+
+      
+      $("#content ul").empty();
+      $.each( data, function( i, item ) {
+            d = (DISTANCIA[item.id] != null)? DISTANCIA[item.id] : "";
+            li = $('<li id="li_'+item.id+'"><a data-icon="arrow-r" onclick="app.select($(this))" val="'+i+'">'+item.medidor_tipo+'('+item.medidor_num+') <br> <small>'+item.razon_social+' - '+item.direccion+' ('+d+')</small></a></li>');
+            if(item.lat != null)
+            {
+              li.children('a').css('color', 'blue');
+            }
+            $("#content ul").append( li );
+            if ( i === 30 ) {
+                return false;
+            }
+      });
+
+      $("#content ul").listview('refresh');
+      $( "#menu" ).trigger( "updatelayout" );
+    },
+
+    getList: function() {
+
+      Remote.download_param( app.refreshIncidencias );
+      Remote.download( app.refreshLecturas );
+    },
+
+
     select: function(item) {
-        item = DATA[item.attr('val')];
+        data = DB.get("LECTURAS"); 
+        item = data[item.attr('val')];
         $('#unidad').html(item.usuario + ' - ' + item.razon_social);
         $('#incidencia').select(0);
         $('#iptlectura').val('');
@@ -292,19 +342,42 @@ var app = {
          // $("#gestion ul").listview('refresh');
         }
 
-        $("#div_mapa").load(URL_MAPA.replace("$ID",item.id));
-        //$("#div_mapa").trigger('create');
+        if(item.lat != null)
+        {
+          $("#solapa_mapa").css('border', '1px solid blue');
+        }
+
 
       },
 
-doAceptarDoc: function(){
- alert($("#fidelizar li[id='li_doc']").attr("html"));
-$("#cambioDoc").close();
-//meter la modificacion en un array de cambios
-},
+      loadMapa: function()
+      {
+        url = Remote.URL_MAPA.replace("$ID", SELECTED_ID);
+        $("#div_mapa").load(url, {remember_token: window.localStorage["remember_token"]});
+      },
+      loadFotos: function()
+      {
+        url = Remote.URL_FOTOS.replace("$ID", SELECTED_ID);
+        $("#div_fotos").load(url, {remember_token: window.localStorage["remember_token"]});
+      },
+
+
+
+
+
+
+
+
+
+    doAceptarDoc: function(){
+     alert($("#fidelizar li[id='li_doc']").attr("html"));
+    $("#cambioDoc").close();
+    //meter la modificacion en un array de cambios
+    },
+    
     useExistingPhoto: function(e) {
-          this.capture(Camera.PictureSourceType.SAVEDPHOTOALBUM);
-        },
+          app.capture(Camera.PictureSourceType.SAVEDPHOTOALBUM);
+    },
 
         // take a new photo:
     takePhoto: function(e) {
@@ -373,22 +446,19 @@ $("#cambioDoc").close();
 
     uploadLectura: function(params){
 
-        $.ajax({
-          type: 'POST',
-          url: URLPUT,
-          data: params,
-          success: function(){
-            app.waitStop();
-            $('#li_'+SELECTED_ID).remove();
-            $.mobile.changePage( "#page1", { transition: "slide", referse: true} );
-          },
-          error: function(error){
-            app.waitStop();
-            alert("Ocurrio un error : " + error.code);            
-          },
-          dataType: 'json',
-        });
+      cb_ok = function(){
+        app.waitStop();
+        $('#li_'+SELECTED_ID).remove();
+        $.mobile.changePage( "#page1", { transition: "slide", referse: true} );
 
+      }
+
+
+      cb_fail = function(e){
+        Alert("Error al guardar");
+      }
+
+      Remote.upload(params, cb_ok, cb_fail);
 
 
       if($('#fotos img'))
@@ -415,26 +485,21 @@ $("#cambioDoc").close();
          //alert($.parseJSON(r.response))    
 
          // borrar la foto
-         
-          }
+      }
 
       result_fail = function (error) {
         console.log("Response = " +  error.code);
-
         //marcar para intentar luego
+      }
 
-        }
-
-      var imagefile = imageURI; 
-       /* Image Upload Start */
-      var ft = new FileTransfer();                     
-      var options = new FileUploadOptions();                      
-      options.fileKey= "file";                      
-      options.fileName=imagefile.substr(imagefile.lastIndexOf('/')+1);
-      options.mimeType="image/jpeg";  
-      options.params = params;
-      options.chunkedMode = false;      
-      ft.upload(imagefile, URLPUT_FOTO, result_ok, result_fail, options);   
+         params = {
+          id: SELECTED_ID,
+          fh: dNow,
+          lat: LAT,
+          lng: LNG,
+          remember_token: window.localStorage["remember_token"] 
+         };
+        Remote.uploadImg(imageURI, params );
      },
 
     do_updateData: function(position){
@@ -458,7 +523,11 @@ $("#cambioDoc").close();
       }
     },
 
-    distancia: function (lat1,lon1, lat2, lon2, unit = "M")
+
+
+
+
+    distancia: function (lat1,lon1, lat2, lon2, unit )
     {
       var radlat1 = Math.PI * lat1/180;
       var radlat2 = Math.PI * lat2/180;
@@ -583,7 +652,7 @@ $("#cambioDoc").close();
 
       cb_ok = function(o){alert("ok:"+o)}
       cb_fail= function(o){alert("fail:"+o)}
-      navigator.tts.speak(text, cb_ok, cb_fail);
+      //navigator.tts.speak(text, cb_ok, cb_fail);
       alert(text + text);
     }
 

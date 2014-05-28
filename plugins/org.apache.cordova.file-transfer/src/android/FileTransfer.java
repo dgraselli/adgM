@@ -28,8 +28,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
+import java.net.URLDecoder;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
@@ -175,7 +177,12 @@ public class FileTransfer extends CordovaPlugin {
             String target = args.getString(1);
 
             if (action.equals("upload")) {
-                upload(source, target, args, callbackContext);
+                try {
+                    source = URLDecoder.decode(source, "UTF-8");
+                    upload(source, target, args, callbackContext);
+                } catch (UnsupportedEncodingException e) {
+                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.MALFORMED_URL_EXCEPTION, "UTF-8 error."));
+                }
             } else {
                 download(source, target, args, callbackContext);
             }
