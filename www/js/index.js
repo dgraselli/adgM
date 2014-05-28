@@ -36,12 +36,10 @@ var SELECTED_ID;
 var IMAGE_DATA;
 var IMAGE_URI;
 var DISTANCIA=[];
-var ARR_INCIDENCIAS = [];
 
 var app = {
     // Application Constructor
     initialize: function() {
-        alert(2);
         this.bindEvents();
         app.inicializar();
     },
@@ -73,8 +71,6 @@ var app = {
 
     inicializar: function()
     {
-        alert(Remote);
-        alert(Remote.HOST);
       $('#url').val( Remote.HOST );
       $('#version').html( Version );
       r_ok = function (result) {
@@ -99,24 +95,7 @@ var app = {
 
       //navigator.tts.startup(r_ok, r_fail);
 
-      token = window.localStorage["remember_token"];
-      $.getJSON( URL_PARAM , {remember_token: token })
-          .done(function( data ) {
-             if(data.length == 0)
-            {
-                alert('No se encontraron incidencias');
-            }
-            INCIDENCIAS = data;
-            $.each( data, function( i, item ) {
-                $("#incidencias ul").append('<li><input type="checkbox" name="incidencia" id ="chk_'+item.id+'" value="'+item.id+'" onclick="app.myFnc(this)" /><label for="chk_'+item.id+'" style="display:inline-block;">'+item.nombre+'</label></li>');
-                if ( i === 30 ) {
-                    return false;
-                }
-            });
-            $("#incidencias ul").listview('refresh');
-          })
-          .fail(function (o) { alert(o)});
-
+     
 
     },
 
@@ -157,44 +136,6 @@ var app = {
     {
       Remote.logout();
       $("#btnSalir").remove();
-    },
-
-        addIncidencia: function(pId_inc, pDato, pValor){
-      var incid = {
-          id: pId_inc,
-          dato: pDato,
-          valor: pValor
-        };
-        ARR_INCIDENCIAS.push(incid);
-    },
-    
-    myFnc: function(p)
-    {
-      var id_incidencia = $(p).attr("value");
-     
-      var dato_req = "";
-      var reg_exp = "";
-      var valor;
-      $.each( INCIDENCIAS, function( i, item ) {
-         if(item.id == id_incidencia)
-         {
-            if((item.dato_requerido)!=null)
-            {
-//alert(1);
-                dato_req = item.dato_requerido;
-                valor = prompt(dato_req);
-               // alert(valor);
-            }
-            else
-            {
-                dato_req = null;
-                valor = null;
-            }
-            app.addIncidencia(id_incidencia, dato_req, valor);  
-         }
-       });
-
-
     },
 
     waitStart: function(msg){
@@ -239,24 +180,7 @@ var app = {
 
     },
 
-    refreshIncidencias: function()
-    {
-            data = DB.get("INCIDENCIAS");
-            
-            if(data.length == 0)
-            {
-                alert('No se encontraron incidencias');
-            }
-            INCIDENCIAS = data;
-            $.each( data, function( i, item ) {
-                $("#incidencias ul").append('<li><input type="checkbox" name="incidencia" id ="chk_'+item.id+'" value="'+item.id+'" " /><label for="chk_'+item.id+'" style="display:inline-block;">'+item.nombre+'</label></li>');
-                if ( i === 30 ) {
-                    return false;
-                }
-            });
-            $("#incidencias ul").listview('refresh');
 
-    },
 
     refreshLecturas: function()
     {
@@ -292,7 +216,7 @@ var app = {
 
     getList: function() {
 
-      Remote.download_param( app.refreshIncidencias );
+      Remote.download_param( c_inc.refreshIncidencias );
       Remote.download( app.refreshLecturas );
     },
 
@@ -301,12 +225,14 @@ var app = {
         data = DB.get("LECTURAS"); 
         item = data[item.attr('val')];
         $('#unidad').html(item.usuario + ' - ' + item.razon_social);
-        $('#incidencia').select(0);
         $('#iptlectura').val('');
 
         SELECTED_ID = item.id;
         IMAGE_DATA = null;
         IMAGE_URI = null;
+        
+        c_inc.clear();
+
         $('#fotos').empty();
         $.mobile.changePage( "#page2", { transition: "slide"} );
     
@@ -434,9 +360,9 @@ var app = {
           fh: dNow,
           lat: LAT,
           lng: LNG,
-          incidencias: null, //array de incidencias {id,dato,valor}
-          cambios:null,  //array de cambios
-          id_plan:null,
+          incidencias: c_inc.getIncidenciasCargadas(),
+          cambios: null,  //array de cambios
+          id_plan: null,
           remember_token: window.localStorage["remember_token"]
  
         };
