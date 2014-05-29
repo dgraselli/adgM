@@ -80,7 +80,6 @@ var Remote = {
               console.log("text status: " + textStatus);
               console.log("error: " + error);
 
-              app.waitStop();
             });
 
   },
@@ -95,7 +94,6 @@ var Remote = {
             cb_ok();
           },
           error: function(error){
-            app.waitStop();
             alert("Ocurrio un error : " + error.code);            
           },
           dataType: 'json',
@@ -126,10 +124,12 @@ var DB = {
 
   save: function(key, data)
   {
+    //window.localStorage[key] = data;
   	this.database[key] = data;
   },
   get: function(key)
   {
+    //return window.localStorage[key];
   	return this.database[key];
   }
 

@@ -30,9 +30,7 @@ var c_inc = {
             INCIDENCIAS = data;
             $.each( data, function( i, item ) {
                 $("#incidencias ul").append('<li><input type="checkbox" name="incidencia" id ="chk_'+item.id+'" value="'+item.id+'" " /><label for="chk_'+item.id+'" style="display:inline-block;">'+item.nombre+'</label><span id="dv_'+item.id+'"></span></li>');
-                if ( i === 30 ) {
-                    return false;
-                }
+              
             }); 
             $("#incidencias ul li input:checkbox").on('click',function(o){
 

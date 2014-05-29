@@ -62,6 +62,11 @@ var c_fid = {
 
 	clear:function(){
 		DATOS_FIDELIZADOS = [];
+		$("#docDialog input:text").val("");
+		$("#emailDialog input:text").val("");
+		$("#dirDialog input:text").val("");
+		$("#telDialog input:text").val("");
+
 	},
 
 	getDatosFidelizados: function(){

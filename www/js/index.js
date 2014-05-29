@@ -187,12 +187,10 @@ var app = {
     },
 
 
-
     refreshLecturas: function()
     {
-      app.vibrate();
-      
       app.waitStop();
+      app.vibrate();      
 
       data = DB.get("LECTURAS");
 
@@ -202,28 +200,35 @@ var app = {
       }
 
       
+      app.refreshList(data);
+      $( "#menu" ).trigger( "updatelayout" );
+    },
+
+    getList: function() 
+    {
+      $('#menu').panel('close');
+      Remote.download_param( c_inc.refreshIncidencias );
+      Remote.download( app.refreshLecturas );
+    },
+
+    refreshList: function(data)
+    {
       $("#content ul").empty();
       $.each( data, function( i, item ) {
-            d = (DISTANCIA[item.id] != null)? DISTANCIA[item.id] : "";
-            li = $('<li id="li_'+item.id+'"><a data-icon="arrow-r" onclick="app.select($(this))" val="'+i+'">'+item.medidor_tipo+'('+item.medidor_num+') <br> <small>'+item.razon_social+' - '+item.direccion+' ('+d+')</small></a></li>');
+            d = (DISTANCIA[item.id] != null)? "[Dist: "+DISTANCIA[item.id]+']' : "";
+            li = $('<li id="li_'+item.id+'"><a data-icon="arrow-r" onclick="app.select($(this))" val="'+i+'">'+item.medidor_tipo+'('+item.medidor_num+') '+d+'<br> <small>'+item.razon_social+' - '+item.direccion+'</small></a></li>');
             if(item.lat != null)
             {
               li.children('a').css('color', 'blue');
             }
             $("#content ul").append( li );
-            if ( i === 30 ) {
-                return false;
-            }
+            //if ( i === 30 ) {
+            //    return false;
+            //}
       });
 
       $("#content ul").listview('refresh');
-      $( "#menu" ).trigger( "updatelayout" );
-    },
-
-    getList: function() {
-
-      Remote.download_param( c_inc.refreshIncidencias );
-      Remote.download( app.refreshLecturas );
+      $('#menu').panel('close');
     },
 
 
@@ -385,14 +390,18 @@ var app = {
     },
 
     updateData: function(){
+        app.waitStart("Cargando datos");
+
         app.geoAndThen(app.do_updateData);
     },
 
 
     uploadFoto: function (imageURI, vImage, params) {
       if (TEST) return;
+        app.waitStart("Cargando datos");
 
       result_ok = function (r) {
+
          console.log("Code = " + r.responseCode);
          console.log("Response = " + r.response);
          //alert($.parseJSON(r.response))    
@@ -414,11 +423,15 @@ var app = {
           remember_token: window.localStorage["remember_token"] 
          };
         Remote.uploadImg(imageURI, params );
+        app.waitStop();
+
      },
 
     do_updateData: function(position){
       try
       {  
+        app.waitStart("Cargando datos");
+
         LAT = position.coords.latitude;
         LNG = position.coords.longitude;
                 
@@ -467,12 +480,16 @@ var app = {
     do_filtrarPorUbicacion: function(position)
     {
         app.waitStop();
+        app.vibrate();
+
+
 
         LAT = position.coords.latitude;
         LNG = position.coords.longitude;
 
         items_dinstancia = [];
         DISTANCIA = [];
+        DATA = DB.get("LECTURAS");
         $.each( DATA, function( i, item ) {
           distancia = app.distancia(LAT, LNG, item.lat, item.lon, "M");
           distancia = Math.round(distancia);
@@ -486,7 +503,7 @@ var app = {
 
 
         data = [];
-        for(i=0; i<9; i++)
+        for(i=0; i<4; i++)
         {
           data.push(app.getItem( items_dinstancia[i].id ));
         }
@@ -519,6 +536,7 @@ var app = {
          URL_MAPA ="http://"+host+"/mapa";
 
         app.waitStop();
+        history.back();
 
       }catch(e)
       {

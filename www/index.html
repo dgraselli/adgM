@@ -66,6 +66,10 @@
                 <!-- panel content goes here -->
                 <a data-role="button" onclick="app.getList()" data-icon="search" data-iconpos="left" data-theme="b" >Bajar</a>
                 <br/>
+                <a data-role="button" onclick="app.refreshLecturas()" data-icon="search" data-iconpos="left" data-theme="b" >Todas</a>
+                <a data-role="button" onclick="app.filtrarPorUbicacion()" data-icon="search" data-iconpos="left" data-theme="b" >Cercanas</a>
+                <br/>
+
                 <a data-role="button" data-rel="button" href="#config" data-icon="gear" >Opciones</a>
                 <a data-role="button" data-rel="button" onclick="app.exitApp()">Cerrar</a>
                 
@@ -74,12 +78,10 @@
 
     <div role="main">
         <div data-role="header" id="ruta" >
-            <h3 style="margin-top:10px;" >unidades</h3>
+            <h1>Pendientes</h1>
             <a href="#menu" data-role="button" data-inline="true" data-iconpos="notext" data-icon="bars"></a>
         </div><!-- /header -->
-      
-        
-         <a data-role="button" onclick="app.filtrarPorUbicacion()" data-theme="e">Cercanos</a>
+         
         <div id="content">
             <ul data-role="listview" data-filter="true"></ul>
         </div>
@@ -221,11 +223,11 @@
 
 <div data-role="page" id="cambioEmail">
         <div data-role="header" >
-            <h1>Cambio Telefono</h1>
+            <h1>Cambio Email</h1>
         </div>
 
         <div data-role="content" align="center" id="emailDialog">
-             <label for="iptEmail">Telefono</label>
+             <label for="iptEmail">Email</label>
              <input type="text" name="iptEmail" id="iptEmail" placeholder="Email"/> 
              <input type="button" name="aceptarEmail" id="aceptarEmail" onclick="c_fid.doAceptarCambioEmail();" value="Aceptar"/> 
              
