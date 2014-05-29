@@ -22,6 +22,7 @@
 
 var TEST = false;
 var HOST = "https://adgw.herokuapp.com";
+var HOST = "http://localhost:3000";
 
 
 
@@ -216,7 +217,7 @@ var app = {
       $("#content ul").empty();
       $.each( data, function( i, item ) {
             d = (DISTANCIA[item.id] != null)? "[Dist: "+DISTANCIA[item.id]+']' : "";
-            li = $('<li id="li_'+item.id+'"><a data-icon="arrow-r" onclick="app.select($(this))" val="'+i+'">'+item.medidor_tipo+'('+item.medidor_num+') '+d+'<br> <small>'+item.razon_social+' - '+item.direccion+'</small></a></li>');
+            li = $('<li id="li_'+item.id+'"><a data-icon="arrow-r" onclick="app.select($(this))" val="'+i+'">'+item.secuencia+') '+item.medidor_tipo+'('+item.medidor_num+') '+d+'<small>'+item.razon_social+' - '+item.direccion+'</small></a></li>');
             if(item.lat != null)
             {
               li.children('a').css('color', 'blue');
