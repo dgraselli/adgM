@@ -21,14 +21,15 @@
 
 
 var TEST = false;
-//var HOST = "http://localhost:3000";
 var HOST = "https://adgw.herokuapp.com";
+
+
 
 Remote.init(HOST);
 DB.init();
 var Version=2;
 
-
+IMAGE_WIDHT = 1024;
 //-----------------------------------------------
 
 
@@ -99,6 +100,11 @@ var app = {
 
     },
 
+    exitApp: function (){
+
+       navigator.app.exitApp();
+    },
+
     createSalirBtn: function()
     {
         $('<a/>' , {
@@ -152,11 +158,11 @@ var app = {
 
     vibrate: function() {
         if(navigator.notification)
-            navigator.notification.vibrate(2000);
+            navigator.notification.vibrate(1000);
     },
 
     showMapa: function(){
-        var ref = window.open(URL_MAPA, '_EngageEngageEngageblank', 'hidden=false');
+        var ref = window.open(Remote.URL_MAPA, '_EngageEngageEngageblank', 'hidden=false');
         ref.show();
     },
 
@@ -232,40 +238,21 @@ var app = {
         IMAGE_URI = null;
         
         c_inc.clear();
+        c_deu.clear();
+        c_fid.clear();
 
         $('#fotos').empty();
         $.mobile.changePage( "#page2", { transition: "slide"} );
     
 
         $('#img').attr('src', 'img/logo.png');
-        $("#datos_unidad ul").empty();
-        $("#datos_unidad ul").append('<li id="li_doc"><a href="#cambioDoc" data-rel="dialog">Doc.: <strong>'+item.doc_tipo +' ' + item.doc_nro+'</strong></a></li>');
         
-        var dir = item.calle + ' Nro ' + item.altura;
-        if(item.piso!=null) dir += ' Piso ' + item.piso;
-        if(item.dpto!=null) dir += ' Depto ' + item.dpto;
-        if(item.datos_comp!=null) dir += ' ' + item.datos_comp;
-        dir += ' CP ' + item.cp;
-        $("#datos_unidad ul").append('<li id="li_dir"><a href="#cambioDir" data-rel="dialog">Dir.: <strong>'+dir+'</strong></a></li>');
-        
-        var telefono = "-";
-        if(item.telefono!=null) telefono = item.telefono;
-        $("#datos_unidad ul").append('<li id="li_tel"><a href="#cambioTel" data-rel="dialog">Tel.: <strong>'+telefono+'</strong></a></li>');
-        
-        $("#datos_unidad ul").listview('refresh');
+        c_fid.setDatosFidelizacion(item);
 
         if(item.deuda!= undefined)
         {
-          $("#deuda").html('$ ' + item.deuda.monto.toFixed(2));
-          
-          $("#opciones fieldset").empty();
-          for(var i=0 ; i<item.deuda.planes.length ; i++)
-          {          
-            $("#opciones fieldset").append('<input type="radio" name="radio-choice" id="radio-choice-' + item.deuda.planes[i].id + '" value="'+item.deuda.planes[i].id+'" />');
-            $("#opciones fieldset").append('<label for="radio-choice-'+item.deuda.planes[i].id+'">' + item.deuda.planes[i].desc + '</label>');
-          }
-          $("#opciones").trigger('create');
-         // $("#gestion ul").listview('refresh');
+          c_deu.setDatosDeuda(item.deuda);
+         
         }
 
         if(item.lat != null)
@@ -330,7 +317,7 @@ var app = {
           navigator.camera.getPicture(app.onCaptureSuccess, app.onCaptureFail, {
             destinationType: Camera.DestinationType.FILE_URI,
             sourceType: Camera.PictureSourceType.CAMERA,
-            targetWidth: 300,
+            targetWidth: IMAGE_WIDHT,
             correctOrientation: true
           });
     },
@@ -361,8 +348,8 @@ var app = {
           lat: LAT,
           lng: LNG,
           incidencias: c_inc.getIncidenciasCargadas(),
-          cambios: null,  //array de cambios
-          id_plan: null,
+          cambios: c_fid.getDatosFidelizados(),  //array de cambios
+          id_plan: c_deu.getPlanSelected(),
           remember_token: window.localStorage["remember_token"]
  
         };
@@ -418,7 +405,8 @@ var app = {
         //marcar para intentar luego
       }
 
-         params = {
+      dNow = new Date();
+      params = {
           id: SELECTED_ID,
           fh: dNow,
           lat: LAT,
@@ -438,7 +426,7 @@ var app = {
         app.uploadLectura(params);
  
       
-
+        app.vibrate();
                  
       }
       catch(e)

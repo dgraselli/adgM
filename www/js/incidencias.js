@@ -4,9 +4,18 @@ var c_inc = {
 	
 
 
-    getIncidencia: function(id) {
+    getIncidencia: function(pId) {
         data = DB.get("INCIDENCIAS");
-        return data[0];
+        ret = null;
+       // alert(pId);
+        $.each(data, function(i,inc){
+            if(inc.id == pId)
+            {
+                ret = inc;
+            }
+        });
+
+        return ret;
     }, 
 
     
@@ -24,8 +33,9 @@ var c_inc = {
                 if ( i === 30 ) {
                     return false;
                 }
-            });
+            }); 
             $("#incidencias ul li input:checkbox").on('click',function(o){
+
                 c_inc.incidenciaSolicitarDato(this);
             });
 
@@ -46,8 +56,10 @@ var c_inc = {
 
      
       item = c_inc.getIncidencia(id_incidencia);
-     
-        if((item.dato_requerido)!=null)
+    if(item != null)
+    {
+       // alert(item.dato_requerido);
+        if((item.dato_requerido)!=null && (item.dato_requerido)!="")
         {
             dato_req = item.dato_requerido;
             valor = prompt(dato_req);
@@ -58,8 +70,8 @@ var c_inc = {
             dato_req = null;
             valor = null;
         }
-        c_inc.addIncidencia(id_incidencia, dato_req, valor);  
-
+        c_inc.addIncidencia(id_incidencia, dato_req, valor);      
+    }
     },
 
     addIncidencia: function(pId_inc, pDato, pValor){
@@ -69,8 +81,10 @@ var c_inc = {
           valor: pValor
         };
         ARR_INCIDENCIAS.push(incid);
-
-        $('#dv_'+incid.id).html( "<b>"+incid.dato + ':</b> ' + incid.valor );
+        if(pDato!=null)
+        {
+            $('#dv_'+incid.id).html( "<b>"+incid.dato + ':</b> ' + incid.valor );
+        }
     },
 
     clear: function()

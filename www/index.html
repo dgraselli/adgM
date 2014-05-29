@@ -22,7 +22,7 @@
         <meta charset="utf-8" />
         <meta name="format-detection" content="telephone=no" />
         <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
-        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=5, minimum-scale=1, width=450px, height=100px, target-densitydpi=device-dpi" />
 
 
         <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.css" />
@@ -54,7 +54,6 @@
 
             </form>
 
-            <button onclick="alert(app); app.initialize();">TEST</button>
         </div>
 
     </div>
@@ -66,10 +65,10 @@
         <div data-role="panel" id="menu" data-position="left" data-display="reveal" data-dismissible="true">
                 <!-- panel content goes here -->
                 <a data-role="button" onclick="app.getList()" data-icon="search" data-iconpos="left" data-theme="b" >Bajar</a>
-                <a data-role="button" onclick="app.showMapa()" data-theme="e">Ver mapa</a> 
-                <a data-role="button" onclick="app.speak('hola')"data-theme="e">tts</a>
-
+                <br/>
                 <a data-role="button" data-rel="button" href="#config" data-icon="gear" >Opciones</a>
+                <a data-role="button" data-rel="button" onclick="app.exitApp()">Cerrar</a>
+                
         </div>
 
 
@@ -179,54 +178,70 @@
         </div>
     </div>
 
-<div data-role="page" id="cambioDoc">
-        <div data-role="header" id="doc_title">
+<div data-role="page" id="cambioDoc" data-cache="never">
+        <div data-role="header" >
             <h1>Cambio Documento</h1>
         </div>
 
-        <div data-role="content" align="center">
+        <div data-role="content" align="center" id="docDialog">
              <label for="iptDoc">Documento</label>
-             <input type="text" name="iptDoc" id="iptDoc" placeholder="Documento"/> 
-             <input type="button" name="aceptarDoc" id="aceptarDoc" onclick="app.doAceptarDoc();" value="Aceptar"/> 
+             <input type="text" name="iptDoc" id="iptDoc" placeholder="Documento" ></input>
+             <input type="button" name="aceptarDoc" id="aceptarDoc" onclick="c_fid.doAceptarCambioDoc();" value="Aceptar"/> 
              
         </div>
 
 </div>
 <div data-role="page" id="cambioDir">
-        <div data-role="header" id="doc_title">
+        <div data-role="header" >
             <h1>Cambio Direccion</h1>
         </div>
 
-        <div data-role="content" align="center">
+        <div data-role="content" align="center" id="dirDialog">
              <label for="iptDir">Direccion</label>
              <input type="text" name="iptDir" id="iptDir" placeholder="Direccion"/> 
-             <input type="button" name="aceptarDir" id="aceptarDir" onclick="app.doAceptarDir();" value="Aceptar"/> 
+             <input type="button" name="aceptarDir" id="aceptarDir" onclick="c_fid.doAceptarCambioDir();" value="Aceptar"/> 
              
         </div>
 
 </div>
 
 <div data-role="page" id="cambioTel">
-        <div data-role="header" id="doc_title">
+        <div data-role="header">
             <h1>Cambio Telefono</h1>
         </div>
 
-        <div data-role="content" align="center">
+        <div data-role="content" align="center" id="telDialog">
              <label for="iptTel">Telefono</label>
              <input type="text" name="iptTel" id="iptTel" placeholder="Telefono"/> 
-             <input type="button" name="aceptarTel" id="aceptarTel" onclick="app.doAceptarTel();" value="Aceptar"/> 
+             <input type="button" name="aceptarTel" id="aceptarTel" onclick="c_fid.doAceptarCambioTel();" value="Aceptar"/> 
              
         </div>
 
 </div>
 
+<div data-role="page" id="cambioEmail">
+        <div data-role="header" >
+            <h1>Cambio Telefono</h1>
+        </div>
+
+        <div data-role="content" align="center" id="emailDialog">
+             <label for="iptEmail">Telefono</label>
+             <input type="text" name="iptEmail" id="iptEmail" placeholder="Email"/> 
+             <input type="button" name="aceptarEmail" id="aceptarEmail" onclick="c_fid.doAceptarCambioEmail();" value="Aceptar"/> 
+             
+        </div>
+
+</div>
         <script type="text/javascript" src="phonegap.js"></script>
         <script type="text/javascript" src="js/remote.js"></script>
         <script type="text/javascript" src="js/incidencias.js"></script>
+        <script type="text/javascript" src="js/deuda.js"></script>
+        <script type="text/javascript" src="js/fidelizacion.js"></script>
         <script type="text/javascript" src="js/index.js"></script>
 
         <script type="text/javascript">
             app.initialize();
+            
         </script>
 
     </body>

@@ -113,3 +113,35 @@ h1 {
     animation:fade 3000ms infinite;
     -webkit-animation:fade 3000ms infinite;
 }
+input[type="text"] {
+    font-size: 30px;
+}
+#fotos img
+{
+    width: 100px;
+    border: 1px solid black;
+    margin: 5px;
+}
+input[type="password"] {
+    font-size: 30px;
+}
+input[type="search"] {
+    font-size: 30px;
+}
+.ui-input-search{
+    /*we may use a fielcontain with ID if we don't want to override for ALL*/
+    font-size: 30px;
+    }
+
+#loginPage div[role="main"]
+{
+    margin: 40px;
+}
+
+#loginPage input
+{
+    font-size: 42px;
+    text-align: center;
+    vertical-align: middle;
+    
+}
