@@ -39,14 +39,18 @@ var Remote = {
             }
           },
           "json"
-          ).fail( function(o){console.log(o);cb_fail(o)} );
+          ).fail( function(o){
+            console.log(o);
+            cb_fail(o)
+            } 
+          );
     } else {
         cb_fail("Ingrese usuario y contraseña");
     }
     return false;
   },
 
-  download_param: function(cb_ok)
+  download_param: function(cb_ok, cb_fail)
   {
   	  //Carga parametricas
       token = window.localStorage["remember_token"];
@@ -55,10 +59,13 @@ var Remote = {
           	DB.save("INCIDENCIAS", data);
           	cb_ok();
           })
-          .fail(function (o) { console.debug(o); alert("Error al ingresar: "+o)});
+          .fail(function (o) { 
+            console.debug(o); 
+            cb_fail();
+          });
   },
 
-  download: function(cb_ok) {
+  download: function(cb_ok, cb_fail) {
         
         token = window.localStorage["remember_token"];
         user  = window.localStorage["username"];
@@ -70,8 +77,6 @@ var Remote = {
  
           })
           .fail(function( jqxhr, textStatus, error ) {
-              var err = textStatus + ', ' + error + jqxhr;
-              alert(err);
               console.log( "Request Failed: " + err);
               xhr = jqxhr;
               console.log("readyState: " + xhr.readyState);
@@ -79,7 +84,7 @@ var Remote = {
               console.log("status: " + xhr.status);
               console.log("text status: " + textStatus);
               console.log("error: " + error);
-
+              cb_fail();
             });
 
   },
@@ -127,10 +132,12 @@ var DB = {
     //window.localStorage[key] = data;
   	this.database[key] = data;
   },
-  get: function(key)
+
+  get: function(key, default_value)
   {
     //return window.localStorage[key];
-  	return this.database[key];
+  	ret = this.database[key];
+    return ret ? ret : default_value;
   }
 
 

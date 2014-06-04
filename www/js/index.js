@@ -22,13 +22,12 @@
 
 var TEST = false;
 var HOST = "https://adgw.herokuapp.com";
-var HOST = "http://localhost:3000";
+var VERSION=3;
 
 
-
-Remote.init(HOST);
 DB.init();
-var Version=2;
+Config.init();
+Remote.init( Config.url );
 
 IMAGE_WIDHT = 1024;
 //-----------------------------------------------
@@ -43,21 +42,26 @@ var app = {
     // Application Constructor
     initialize: function() {
         this.bindEvents();
-        app.inicializar();
+        if( ! navigator.camera){
+          app.inicializar();
+        }
     },
     // Bind Event Listeners
     //
     // Bind any events that are required on startup. Common events are:
     // 'load', 'deviceready', 'offline', and 'online'.
     bindEvents: function() {
-        document.addEventListener('deviceready', this.onDeviceReady, false);
+        document.addEventListener('deviceready', app.onDeviceReady, false);
     },
     // deviceready Event Handler
     //
     // The scope of 'this' is the event. In order to call the 'receivedEvent'
     // function, we must explicity call 'app.receivedEvent(...);'
     onDeviceReady: function() {
+        app.inicializar();
+        tts.startup();
         app.receivedEvent('deviceready');
+
     },
     // Update DOM on a Received Event
     receivedEvent: function(id) {
@@ -73,8 +77,10 @@ var app = {
 
     inicializar: function()
     {
-      $('#url').val( Remote.HOST );
-      $('#version').html( Version );
+      $('#url').val( Config.url );
+      $('#version').html( Config.version );
+      Config.load();
+
       r_ok = function (result) {
           console.log(result);
       };
@@ -97,6 +103,7 @@ var app = {
 
       //navigator.tts.startup(r_ok, r_fail);
 
+      app.refreshLecturas();
      
 
     },
@@ -123,16 +130,14 @@ var app = {
       var p = $("#password", form).val();
 
       login_ok = function(){
-
-        $.mobile.navigate( "#page1" );
         $("#submitButton").removeAttr("disabled");
-
         app.createSalirBtn();
-
+        DB.save("LECTURAS",[]);
+        $.mobile.navigate( "#page1" );
       }
 
       login_fail = function(msg){
-        alert("Error al login "+msg);
+        app.showAlert("Error al login "+msg);
         $("#submitButton").removeAttr("disabled");
       }
 
@@ -157,10 +162,43 @@ var app = {
         $.mobile.loading( 'hide' );
     },
 
-    vibrate: function() {
-        if(navigator.notification)
-            navigator.notification.vibrate(1000);
+    notificar: function() {
+      if(navigator.notification) {
+          navigator.notification.beep(3);
+          navigator.notification.vibrate(1000);
+      }
+            
     },
+
+   showAlert: function (msg, title, cb_func, btn_name) {
+      if(navigator.notification) {
+        msg = msg ? msg : "..."; 
+        title = title ? title : ""; 
+        btn_name = btn_name ? btn_name : "Aceptar"; 
+        cb_func = cb_func ? cb_func : function(){}; 
+        navigator.notification.alert(msg, title, cb_func, btn_name);
+      }
+      else
+      {
+        alert(msg);
+      }
+    },
+
+    showConfirm: function(msb, title, cb_func, btn_names) 
+    {
+      if(navigator.notification) {
+        msg = msg ? msg : "..."; 
+        title = title ? title : ""; 
+        btn_names = btn_names ? btn_names : "Aceptar, Cancelar"; 
+        cb_func = cb_func ? cb_func : function(){}; 
+        navigator.notification.confirm(msb, cb_func, title, btn_names);
+      }
+      else
+      {
+        confirm(msg, cb_ok, title, btn_labels); 
+      }
+    },
+
 
     showMapa: function(){
         var ref = window.open(Remote.URL_MAPA, '_EngageEngageEngageblank', 'hidden=false');
@@ -170,7 +208,7 @@ var app = {
 
     geoAndThen: function(func) {
 
-      app.waitStart('Obteniendo ubicacion');     
+      app.waitStart('Obteniendo ubicacion...');     
       
       if (navigator.geolocation)
       {
@@ -191,25 +229,33 @@ var app = {
     refreshLecturas: function()
     {
       app.waitStop();
-      app.vibrate();      
+      app.notificar();      
 
       data = DB.get("LECTURAS");
 
-      if(data.length == 0)
+      if( data == null || data.length == 0)
       {
-        alert('No se encontraron unidades');
+        app.showAlert('No se encontraron unidades');
       }
-
-      
-      app.refreshList(data);
-      $( "#menu" ).trigger( "updatelayout" );
+      else
+      {
+        app.refreshList(data);
+        $( "#menu" ).trigger( "updatelayout" );
+      }
     },
 
+    download_fail: function()
+    {
+        app.showAlert("Error al obtener datos, por favor, registrese nuevamente");
+        app.handleLogout();
+        $.mobile.navigate( "#loginPage" );   
+    },
     getList: function() 
     {
       $('#menu').panel('close');
-      Remote.download_param( c_inc.refreshIncidencias );
-      Remote.download( app.refreshLecturas );
+      app.waitStart('Obteniendo datos...');  
+      Remote.download_param( c_inc.refreshIncidencias, app.download_fail );
+      Remote.download( app.refreshLecturas , app.download_fail );
     },
 
     refreshList: function(data)
@@ -217,7 +263,7 @@ var app = {
       $("#content ul").empty();
       $.each( data, function( i, item ) {
             d = (DISTANCIA[item.id] != null)? "[Dist: "+DISTANCIA[item.id]+']' : "";
-            li = $('<li id="li_'+item.id+'"><a data-icon="arrow-r" onclick="app.select($(this))" val="'+i+'">'+item.secuencia+') '+item.medidor_tipo+'('+item.medidor_num+') '+d+'<small>'+item.razon_social+' - '+item.direccion+'</small></a></li>');
+            li = $('<li id="li_'+item.id+'"><a data-icon="arrow-r" onclick="app.select($(this))" val="'+i+'">'+item.secuencia+') '+item.medidor_tipo+'('+item.medidor_num+') '+d+'<br> <small>'+item.razon_social+' - '+item.direccion+'</small></a></li>');
             if(item.lat != null)
             {
               li.children('a').css('color', 'blue');
@@ -232,12 +278,20 @@ var app = {
       $('#menu').panel('close');
     },
 
-
+    
     select: function(item) {
         data = DB.get("LECTURAS"); 
         item = data[item.attr('val')];
         $('#unidad').html(item.usuario + ' - ' + item.razon_social);
         $('#iptlectura').val('');
+
+        if(Config.audio) {
+          tts.speak("Usuario " + item.usuario);
+          tts.silence(450);
+          tts.speak("Medidor numero ");
+          tts.speak_slow(item.medidor_num);
+        }
+
 
         SELECTED_ID = item.id;
         IMAGE_DATA = null;
@@ -334,7 +388,7 @@ var app = {
     },
 
     onCaptureFail: function() {
-        alert('Ocurrio un error al capturar la imagen');
+        app.showAlert('Ocurrio un error al capturar la imagen');
     },
 
     getParams: function()
@@ -368,13 +422,15 @@ var app = {
       cb_ok = function(){
         app.waitStop();
         $('#li_'+SELECTED_ID).remove();
-        $.mobile.changePage( "#page1", { transition: "slide", referse: true} );
+        
+        //$.mobile.changePage( "#page1", { transition: "slide", referse: true} );
+        history.back();
 
       }
 
 
       cb_fail = function(e){
-        Alert("Error al guardar");
+        app.showAlert("Error al guardar");
       }
 
       Remote.upload(params, cb_ok, cb_fail);
@@ -440,14 +496,14 @@ var app = {
         app.uploadLectura(params);
  
       
-        app.vibrate();
+        app.notificar();
                  
       }
       catch(e)
       {
         app.waitStop();
-        alert("Error");
-        alert(e.msg);
+        app.showAlert("Error");
+        app.showAlert(e.msg);
       }
     },
 
@@ -457,6 +513,9 @@ var app = {
 
     distancia: function (lat1,lon1, lat2, lon2, unit )
     {
+      if(lat2 == null)
+        return null;
+
       var radlat1 = Math.PI * lat1/180;
       var radlat2 = Math.PI * lat2/180;
       var radlon1 = Math.PI * lon1/180;
@@ -470,6 +529,8 @@ var app = {
       if (unit=="K") { dist = dist * 1.609344; }
       if (unit=="M") { dist = dist * 1.609344 * 1000; }
       if (unit=="N") { dist = dist * 0.8684; }
+      
+      //alert(lat1 + ":" + lon1 + '   ' + lat2 + ':' + lon2 + ' --> '+ dist);
       return dist;
     },
 
@@ -481,7 +542,7 @@ var app = {
     do_filtrarPorUbicacion: function(position)
     {
         app.waitStop();
-        app.vibrate();
+        app.notificar();
 
 
 
@@ -493,10 +554,14 @@ var app = {
         DATA = DB.get("LECTURAS");
         $.each( DATA, function( i, item ) {
           distancia = app.distancia(LAT, LNG, item.lat, item.lon, "M");
-          distancia = Math.round(distancia);
-          items_dinstancia.push( {"id":item.id, "distancia": distancia} );
-          DISTANCIA[item.id] = distancia;
+          if(distancia != null)
+          {
+            distancia = Math.round(distancia);
+            items_dinstancia.push( {"id":item.id, "distancia": distancia} );
+            DISTANCIA[item.id] = distancia;
+          }
         });
+
 
         items_dinstancia.sort(function(a,b){
           return (a.distancia - b.distancia);
@@ -504,13 +569,15 @@ var app = {
 
 
         data = [];
-        for(i=0; i<4; i++)
+        for(i=0; i<items_dinstancia.length; i++)
         {
           data.push(app.getItem( items_dinstancia[i].id ));
         }
 
-
-        app.refreshList(data);
+        if(data.length > 0)
+        {
+          app.refreshList(data);
+        }
         
         
     },
@@ -527,66 +594,21 @@ var app = {
 
     saveSetting: function()
     {
-      try
-      {
         app.waitStart('Guardando datos');
-        host = $('#url').val();
-        URL = "http://"+host+"/lecturas/pendientes";
-        URL_PARAM = "http://"+host+"/incidencias.json";
-         URLPUT  = "http://"+host+"/update_lectura";
-         URL_MAPA ="http://"+host+"/mapa";
+                
+        Config.save();
 
         app.waitStop();
         history.back();
 
-      }catch(e)
-      {
-        alert(e.msg);
-      }
     },
-    getUrl: function()
+
+    recognizeSpeech: function(input)
     {
-      try
-      {
-        return host;
-        
-      }catch(e)
-      {
-        alert(e.msg);
-      }
-    },
-
-    recognizeSpeech: function() {
-                var maxMatches = 1;
-                var promptString = "Habler ahora"; // optional
-                var language = "es-AR";                     // optional
-                window.plugins.speechrecognizer.startRecognize(function(result){
-                    $('#iptlectura').val(result);
-                }, function(errorMessage){
-                    console.log("Error message: " + errorMessage);
-                }, maxMatches, promptString, language);
-    },
-
-     // Show the list of the supported languages
-    getSupportedLanguages: function() {
-                window.plugins.speechrecognizer.getSupportedLanguages(function(languages){
-                    // display the json array
-                    alert(languages);
-                }, function(error){
-                    alert("Could not retrieve the supported languages : " + error);
-                });
-    },
-
-    speak: function(text)
-    {
-      alert(text);
-      alert(navigator.tts);
-      alert(window.plugins);
-
-      cb_ok = function(o){alert("ok:"+o)}
-      cb_fail= function(o){alert("fail:"+o)}
-      //navigator.tts.speak(text, cb_ok, cb_fail);
-      alert(text + text);
+      speech_rec.recognize(function(result){
+          $(input).val(result);
+      });
     }
+
 
 };

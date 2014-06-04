@@ -157,3 +157,9 @@ div[data-role="header"] a[data-role="button"]
     height: 60px;
 }
 
+a[data-role="button"]
+{
+    font-size: :32px;
+    height: 40px;
+}
+
