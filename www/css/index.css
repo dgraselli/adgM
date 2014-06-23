@@ -161,5 +161,43 @@ a[data-role="button"]
 {
     font-size: :32px;
     height: 40px;
+    text-align: center;
+    vertical-align: middle;
 }
+
+.text{
+    font-size: 38px;
+}
+
+#tabs li
+{
+    text-align: center;
+    vertical-align: middle;
+
+}
+#tabs a
+{
+    height: 50px;
+}
+
+ul#pendientes  li a {
+    font-size: 28px;
+}
+
+.ui-btn-icon-top:after{
+    top: 30px;
+}
+
+#page_gps 
+{
+    font-size: 28px;
+}
+
+.ui-loader-verbose
+{
+    background-color: white;
+    font-size: 24px;
+    border: 1px solid black;
+}
+
 

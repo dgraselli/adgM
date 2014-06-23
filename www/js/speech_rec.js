@@ -4,8 +4,8 @@ var speech_rec = {
                 var maxMatches = 1;
                 var promptString = "Habler ahora"; // optional
                 var language = "es-AR";                     // optional
-                window.plugins.speechrecognizer.startRecognize(cb_fail, function(errorMessage){
-                    console.log("Error de reconicimiento de audio: " + errorMessage);
+                window.plugins.speechrecognizer.startRecognize(cb_ok, function(errorMessage){
+                    alert("Error de reconicimiento de audio: " + errorMessage);
                 }, maxMatches, promptString, language);
     },
 

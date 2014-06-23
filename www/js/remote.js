@@ -5,6 +5,7 @@ var Remote = {
     this.URL         = host+"/lecturas/pendientes.json";
   	this.URL_PARAM   = host+"/incidencias.json";
   	this.URLPUT      = host+"/update_lectura";
+    this.URL_TRACK   = host+"/track";
   	this.URLPUT_FOTO = host+"/update_foto";
     this.URL_MAPA    = host+"/lecturas/$ID/visualizar";
   	this.URL_FOTOS    = host+"/lecturas/$ID/fotos";
@@ -20,6 +21,41 @@ var Remote = {
   logout: function()
   {
     window.localStorage.removeItem("remember_token");
+  },
+
+  track: function(position)
+  {
+    if( window.localStorage["remember_token"] == null)
+      return;
+
+    var dev = {
+          name: device.name,
+          uuid: device.uuid,
+          version: device.version,
+          platform: device.platform,
+          phonegap: device.phonegap,
+    }
+
+    params = {
+      lat: position.coords.latitude,
+      lng: position.coords.longitude,
+      device: dev,
+      pos: position,
+      remember_token: window.localStorage["remember_token"]
+    }
+
+    $.ajax({
+          type: 'GET',
+          url: Remote.URL_TRACK,
+          data: params,
+          success: function(){
+            //alert('ok');
+          },
+          error: function(error){
+            //alert('e: '+error);           
+          },
+          dataType: 'json',
+        });
   },
 
   login: function(u, p, cb_ok, cb_fail)
@@ -72,6 +108,10 @@ var Remote = {
         
         $.getJSON( this.URL, {remember_token: token, lecturista: user} )
           .done(function( data ) {
+            
+            if(data.length == 0) 
+              app.showAlert('No se encontraron unidades');
+
           	DB.save("LECTURAS", data);
           	cb_ok();
  
@@ -103,7 +143,44 @@ var Remote = {
           },
           dataType: 'json',
         });
+
+    if (params.fotos)
+    { 
+      $(params.fotos).each(function(i,f){
+         Remote.uploadFoto(f, params );
+      });
+
+    }
   },
+
+  uploadFoto: function (imageURI, params) {
+
+      cb_ok = function (r) {
+
+         console.log("Code = " + r.responseCode);
+         console.log("Response = " + r.response);
+         //alert($.parseJSON(r.response))    
+
+         // borrar la foto
+      }
+
+      cb_fail = function (error) {
+        console.log("Response = " +  error.code);
+        //marcar para intentar luego
+      }
+
+      dNow = new Date();
+      p = {
+          id: params.id,
+          fh: dNow,
+          lat: params.lat,
+          lng: params.lng,
+          remember_token: window.localStorage["remember_token"] 
+         };
+        Remote.uploadImg(imageURI, p, cb_ok, cb_fail);
+  },
+
+
   uploadImg: function(imageURI, params, cb_ok, cb_fail)
   {
       var imagefile = imageURI; 
@@ -113,34 +190,10 @@ var Remote = {
       options.fileName=imagefile.substr(imagefile.lastIndexOf('/')+1);
       options.mimeType="image/jpeg";  
       options.params = params;
-      options.chunkedMode = false;      
+      options.chunkedMode = false;  
+   
       ft.upload(imagefile, this.URLPUT_FOTO, cb_ok, cb_fail, options);   
   }
-};
-
-
-
-
-/// DB
-var DB = {
-  init: function() {
-  	this.database = [];
-  },
-
-  save: function(key, data)
-  {
-    //window.localStorage[key] = data;
-  	this.database[key] = data;
-  },
-
-  get: function(key, default_value)
-  {
-    //return window.localStorage[key];
-  	ret = this.database[key];
-    return ret ? ret : default_value;
-  }
-
-
 };
 
 

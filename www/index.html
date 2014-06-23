@@ -62,18 +62,24 @@
     <!-- Start of first page -->
     <div data-role="page" id="page1" >
     
-        <div data-role="panel" id="menu" data-position="left" data-display="reveal" data-dismissible="true">
+        <div data-role="panel" id="menu" data-position="left" data-display="reveal" data-dismissible="true" >
+            <div data-theme="b">
                 <!-- panel content goes here -->
-                <a data-role="button" onclick="app.getList()" data-icon="search" data-iconpos="left" data-theme="b" >Bajar</a>
+                <a data-role="button" onclick="app.getList()" data-icon="arrow-d" data-iconpos="left" data-theme="b" >Bajar</a>
                 <br/>
-                <a data-role="button" onclick="app.refreshLecturas()" data-icon="search" data-iconpos="left" data-theme="b" >Todas</a>
+                <a data-role="button" onclick="app.refreshLecturas()" data-icon="plus" data-iconpos="left" data-theme="b" >Todas</a>
                 <a data-role="button" onclick="app.filtrarPorUbicacion()" data-icon="search" data-iconpos="left" data-theme="b" >Cercanas</a>
-                <a data-role="button" onclick="tts.speak('prueba 34567')" data-icon="search" data-iconpos="left" data-theme="b" >TTS</a>
-                <br/>
 
-                <a data-role="button" data-rel="button" href="#config" data-icon="gear" >Opciones</a>
-                <a data-role="button" data-rel="button" onclick="app.exitApp()">Cerrar</a>
-                
+                <br />
+
+                <a data-role="button" href="#config" data-icon="gear" >Opciones</a>
+                <a data-role="button" href="#page_gps" data-icon="gear" >GPS</a>
+                <br />
+                <a id="btnSalir" data-role="button" onclick="if(confirm('Desea salir de la session ?')) app.handleLogout()" data-icon="home" data-iconpos="left" data-theme="d" ></a>
+                <br />
+                <br />
+                <a data-role="button" data-icon="delete" data-theme="e" onclick="if(confirm('Desea cerrar esta aplicacion?')) app.exitApp()">Cerrar</a>
+            </div>
         </div>
 
 
@@ -97,7 +103,7 @@
     <!-- Start page -->
     <div data-role="page" id="page2" >
         <div data-role="header" id="unidad_title"  data-position="fixed">
-            <h1 id="unidad"></h1>
+            <h1 id="header"></h1>
             <a data-role="button" data-rel="back" data-icon="arrow-l" data-iconpos="notext"  data-inline="false" onclick="tts.cancel();"></a>
         </div>
 
@@ -105,33 +111,44 @@
             <div data-role="tabs" id="tabs">
                 <div data-role="navbar">
                 <ul>
-                <li><a href="#lectura" data-ajax="false">Lectura</a></li>
-                <li><a href="#fidelizar" data-ajax="false">Fidelizar</a></li>
-                <li><a href="#gestion" data-ajax="false" id="solapa_gestion">Gestion</a></li>
-                <li><a href="#mapa" data-ajax="false" id="solapa_mapa" onclick="app.loadMapa()">Mapa</a></li>
-                <li><a href="#d_fotos" data-ajax="false" id="solapa_fotos" onclick="app.loadFotos()">Fotos</a></li>
+                <li><a href="#lectura" data-ajax="false" data-icon="edit"></a></li>
+                <li><a href="#tab_incidencias" data-ajax="false" data-icon="tag" data-iconpos="notext"></a></li>
+                <li><a href="#fidelizar" data-ajax="false" data-icon="info"></a></li>
+                <li><a href="#gestion" data-ajax="false" id="solapa_gestion" data-icon="shop"></a></li>
+                <!--
+                <li><a href="#mapa" data-ajax="false" id="solapa_mapa" onclick="app.loadMapa()" data-icon="location"></a></li>
+                <li><a href="#d_fotos" data-ajax="false" id="solapa_fotos" onclick="app.loadFotos()" data-icon="video"></a></li>
+                -->
                 </ul>
                 </div>
   
                 <div id="lectura" class="ui-body-d ui-content">
+
+                    <fieldset class="ui-grid-a">
+                    <div class="text" id="direccion" onclick="app.speakControl(this)" ></div>
+                    <div class="text" id="medidor" onclick="app.speakControl(this)" ></div>
+                    </fieldset>
                     <fieldset class="ui-grid-a">
                         <div class="ui-block-a" style="width:70%;">
-                            <input type="number" name="lectura" id="iptlectura" placeholder="Ingrese Lectura" pattern="[0-9]*" style="font-size:40px;text-align: center;" />
+                            <input type="number" name="lectura" id="iptlectura" ondblclick="app.recognizeSpeech('#iptlectura')" placeholder="Ingrese Lectura" pattern="[0-9]*" style="font-size:40px;text-align: center;" />
                         </div>
                         <div class="ui-block-b" style="width:30%;height:100px;">
-                            <a data-role="button" data-icon="audio" onclick="app.recognizeSpeech($('iptlectura'))" data-iconpos="notext" style="width: 80px; height: 80px;"></a>
+                            <a data-role="button" data-icon="audio" onclick="app.recognizeSpeech($('#iptlectura'))" data-iconpos="notext" style="width: 80px; height: 80px;"></a>
                         </div>
                     </fieldset>
                         
                  <!-- <button onclick="app.getSupportedLanguages();">Get Supported Languages</button> -->
 
-                   <div data-role="content" id="incidencias">
+
+                </div>
+
+                <div id="tab_incidencias" class="ui-body-d ui-content">
+                   <div id="incidencias">
                      <h3>Incidencias</h3>
                          <ul id="incidencias_list" data-role="listview" data-filter="false" data-inset="true"></ul>
                     </div>
-
                 </div>
-                
+
                 <div id="fidelizar" class="ui-body-d ui-content">
                     <div data-role="content" id="datos_unidad">
                          <ul data-role="listview" data-inset="true"> </ul>                   
@@ -157,8 +174,10 @@
                 <div id="d_fotos" class="ui-body-d ui-content">
                     <div id="div_fotos"></div>
                 </div>
-
+                <div id="btns_guardar">
                  <a data-role="button" onclick="app.updateData()" data-icon="check" data-iconpos="right" data-theme="b" data-inline="false">Guardar</a>
+                 <a data-role="button" onclick="app.updateDataYSig()" data-icon="check" data-iconpos="right" data-theme="b" data-inline="false">Guardar y Siguiente</a>
+                 </div>
             </div>
         </div>
     </div>
@@ -190,6 +209,28 @@
         </div>
     </div>
 
+
+<div data-role="page" id="page_gps" data-cache="never">
+        <div data-role="header" >
+            <h1>GPS</h1>
+        </div>
+
+        <div data-role="content" align="center" id="docDialog">
+            pos:<div id="pos"></div>             
+            error:<div id="pos_error"></div>             
+            last_error:<div id="pos_last_error"></div>             
+            lat:<div id="pos_latitude"></div>             
+            lon:<div id="pos_longitude"></div>             
+            alt:<div id="pos_altitude"></div>             
+            acc:<div id="pos_accuracy"></div>             
+            altAcc:<div id="pos_altutudeAccuracy"></div>             
+            heading:<div id="pos_heading"></div>             
+            speed:<div id="pos_speed"></div>             
+            ts:<div id="pos_ts"></div>             
+        </div>
+
+</div>
+
 <div data-role="page" id="cambioDoc" data-cache="never">
         <div data-role="header" >
             <h1>Cambio Documento</h1>
@@ -203,6 +244,7 @@
         </div>
 
 </div>
+
 <div data-role="page" id="cambioDir">
         <div data-role="header" >
             <h1>Cambio Direccion</h1>
@@ -246,6 +288,8 @@
 </div>
         <script type="text/javascript" src="phonegap.js"></script>
         <script type="text/javascript" src="tts.js"></script>
+        <script type="text/javascript" src="js/gps.js"></script>
+        <script type="text/javascript" src="js/db.js"></script>
         <script type="text/javascript" src="js/remote.js"></script>
         <script type="text/javascript" src="js/config.js"></script>
         <script type="text/javascript" src="js/tts.js"></script>

@@ -22,14 +22,16 @@
 
 var TEST = false;
 var HOST = "https://adgw.herokuapp.com";
+//var HOST = "http://localhost:3000"
 var VERSION=3;
+var TRACK_EVERY_MS= 30000;
 
-
+GPS.init();
 DB.init();
 Config.init();
 Remote.init( Config.url );
 
-IMAGE_WIDHT = 1024;
+IMAGE_WIDHT = 600;
 //-----------------------------------------------
 
 
@@ -42,7 +44,8 @@ var app = {
     // Application Constructor
     initialize: function() {
         this.bindEvents();
-        if( ! navigator.camera){
+        
+        if( TEST ){
           app.inicializar();
         }
     },
@@ -77,6 +80,7 @@ var app = {
 
     inicializar: function()
     {
+
       $('#url').val( Config.url );
       $('#version').html( Config.version );
       Config.load();
@@ -95,6 +99,7 @@ var app = {
       {
         $.mobile.navigate( "#page1" );
         app.createSalirBtn();
+        GPS.startWatch(app.do_track, app.do_track_fail);
       }
       else
       {
@@ -104,8 +109,31 @@ var app = {
       //navigator.tts.startup(r_ok, r_fail);
 
       app.refreshLecturas();
-     
 
+      
+
+    },
+
+    do_track_fail: function(e)
+    {
+      $("#pos_error").html(e.code + " - " + e.message);
+      $("#pos_last_error").html(e.code + " - " + e.message);
+    },
+
+    do_track: function(pos)
+    {
+        Remote.track(pos);
+
+        $("#pos").html(new Date());
+        $("#pos_error").html("");
+        $("#pos_latitude").html(pos.coords.latitude);
+        $("#pos_longitude").html(pos.coords.longitude);
+        $("#pos_altitude").html(pos.coords.altitude);
+        $("#pos_accuracy").html(pos.coords.accuracy);
+        $("#pos_altitudeAccuracy").html(pos.coords.altitudeAccuracy);
+        $("#pos_heading").html(pos.coords.heading);
+        $("#pos_speed").html(pos.coords.speed);
+        $("#pos_ts").html(pos.timestamp);
     },
 
     exitApp: function (){
@@ -115,11 +143,14 @@ var app = {
 
     createSalirBtn: function()
     {
+        $('#btnSalir').html( window.localStorage["username"] );
+        /*
         $('<a/>' , {
           'id': 'btnSalir',
           'href' : '#loginPage',
           'class': 'ui-btn ui-shadow'
         }).text('Salir').on('click', app.handleLogout).appendTo('#menu');
+        */
     },
 
     handleLogin: function()
@@ -134,10 +165,12 @@ var app = {
         app.createSalirBtn();
         DB.save("LECTURAS",[]);
         $.mobile.navigate( "#page1" );
+        GPS.startWatch(app.do_track, app.do_track_fail);
+
       }
 
       login_fail = function(msg){
-        app.showAlert("Error al login "+msg);
+        app.showAlert("Error al ingresar : "+msg);
         $("#submitButton").removeAttr("disabled");
       }
 
@@ -146,8 +179,9 @@ var app = {
     },
     handleLogout: function()
     {
+      GPS.stopWatch();
       Remote.logout();
-      $("#btnSalir").remove();
+      $.mobile.navigate( "#loginPage" );
     },
 
     waitStart: function(msg){
@@ -164,8 +198,7 @@ var app = {
 
     notificar: function() {
       if(navigator.notification) {
-          navigator.notification.beep(3);
-          navigator.notification.vibrate(1000);
+          navigator.notification.vibrate(100);
       }
             
     },
@@ -173,7 +206,7 @@ var app = {
    showAlert: function (msg, title, cb_func, btn_name) {
       if(navigator.notification) {
         msg = msg ? msg : "..."; 
-        title = title ? title : ""; 
+        title = title ? title : "Notificacion"; 
         btn_name = btn_name ? btn_name : "Aceptar"; 
         cb_func = cb_func ? cb_func : function(){}; 
         navigator.notification.alert(msg, title, cb_func, btn_name);
@@ -206,22 +239,12 @@ var app = {
     },
 
 
-    geoAndThen: function(func) {
+    geoAndThen: function(func, show_wait) {
 
-      app.waitStart('Obteniendo ubicacion...');     
+      if(show_wait == null || show_wait == true)
+        app.waitStart('Obteniendo ubicacion...');     
       
-      if (navigator.geolocation)
-      {
-          navigator.geolocation.getCurrentPosition(func);
-      }
-      else
-      {
-        a = new object();
-        a.coords = new object();
-        a.cords.latitude = -34;
-        a.cords.longitude = -57;
-        func(a);
-      }
+       GPS.geoAndThen(func)
 
     },
 
@@ -235,7 +258,7 @@ var app = {
 
       if( data == null || data.length == 0)
       {
-        app.showAlert('No se encontraron unidades');
+        //app.showAlert('No se encontraron unidades');
       }
       else
       {
@@ -263,7 +286,11 @@ var app = {
       $("#content ul").empty();
       $.each( data, function( i, item ) {
             d = (DISTANCIA[item.id] != null)? "[Dist: "+DISTANCIA[item.id]+']' : "";
-            li = $('<li id="li_'+item.id+'"><a data-icon="arrow-r" onclick="app.select($(this))" val="'+i+'">'+item.secuencia+') '+item.medidor_tipo+'('+item.medidor_num+') '+d+'<br> <small>'+item.razon_social+' - '+item.direccion+'</small></a></li>');
+            li = $('<li id="li_'+item.id+'"><a data-icon="arrow-r" onclick="app.select($(this))" val="'+i+'">'
+                + item.secuencia +') '
+                + item.direccion + ' :: '
+                + '['+item.medidor_tipo+']'+item.medidor_num
+                + '<br> <small>'+item.razon_social+'</small></a></li>');
             if(item.lat != null)
             {
               li.children('a').css('color', 'blue');
@@ -279,23 +306,20 @@ var app = {
     },
 
     
-    select: function(item) {
+    select: function(it) {
         data = DB.get("LECTURAS"); 
-        item = data[item.attr('val')];
-        $('#unidad').html(item.usuario + ' - ' + item.razon_social);
+        item = data[it.attr('val')];
+        //alert(item.id);
+        $('#header').html(item.direccion);
         $('#iptlectura').val('');
-
-        if(Config.audio) {
-          tts.speak("Usuario " + item.usuario);
-          tts.silence(450);
-          tts.speak("Medidor numero ");
-          tts.speak_slow(item.medidor_num);
-        }
 
 
         SELECTED_ID = item.id;
         IMAGE_DATA = null;
         IMAGE_URI = null;
+
+        $("#medidor").empty().append("["+item.medidor_tipo+ "] " +item.medidor_num);
+        $("#direccion").empty().append( item.calle + ' N° '+ item.altura );
         
         c_inc.clear();
         c_deu.clear();
@@ -315,12 +339,9 @@ var app = {
          
         }
 
-        if(item.lat != null)
-        {
-          $("#solapa_mapa").css('border', '1px solid blue');
-        }
+        $("#solapa_mapa").visible((item.lat != null))
 
-
+        $('#btns_guardar').children('a').disabled(false);
       },
 
       loadMapa: function()
@@ -391,7 +412,7 @@ var app = {
         app.showAlert('Ocurrio un error al capturar la imagen');
     },
 
-    getParams: function()
+    getParams: function(position)
     {
          var inc = "";       
         $('input:checked').each(function(i,o){
@@ -400,115 +421,123 @@ var app = {
           else inc = inc + "," + $(o).val();
         });
         var dNow = new Date();
+
+        var dev = {
+          name: device.name,
+          uuid: device.uuid,
+          version: device.version,
+          platform: device.platform,
+          phonegap: device.phonegap,
+        }
         var params = {
           id: SELECTED_ID,
           incidencias: inc,
           valor: $('#iptlectura').val(),
           fh: dNow,
-          lat: LAT,
-          lng: LNG,
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          pos: position,
           incidencias: c_inc.getIncidenciasCargadas(),
           cambios: c_fid.getDatosFidelizados(),  //array de cambios
           id_plan: c_deu.getPlanSelected(),
+          device: dev,
           remember_token: window.localStorage["remember_token"]
  
         };
 
+        if($('#fotos img'))
+        {
+          fotos = [];
+          $('#fotos img').each(function (i, img){
+            fotos.push($(img).attr('src'));
+          }); 
+
+          params.fotos = fotos;
+        }
+
+
         return params;
     },
 
-    uploadLectura: function(params){
-
-      cb_ok = function(){
-        app.waitStop();
-        $('#li_'+SELECTED_ID).remove();
-        
-        //$.mobile.changePage( "#page1", { transition: "slide", referse: true} );
-        history.back();
-
-      }
-
-
-      cb_fail = function(e){
-        app.showAlert("Error al guardar");
-      }
-
-      Remote.upload(params, cb_ok, cb_fail);
-
-
-      if($('#fotos img'))
-      {
-        $('#fotos img').each(function (i, img){
-          app.uploadFoto($(img).attr('src'), "Foto_"+i, params);
-        }); 
-
-      }
-
-    },
-
     updateData: function(){
+        $('#btns_guardar').children('a').attr('disabled',true);
         app.waitStart("Cargando datos");
 
         app.geoAndThen(app.do_updateData);
     },
 
-
-    uploadFoto: function (imageURI, vImage, params) {
-      if (TEST) return;
+    updateDataYSig: function(){
+       $('#btns_guardar').children('a').attr('disabled',true);
         app.waitStart("Cargando datos");
 
-      result_ok = function (r) {
+        app.geoAndThen(app.do_updateDataYSig);
+    },
 
-         console.log("Code = " + r.responseCode);
-         console.log("Response = " + r.response);
-         //alert($.parseJSON(r.response))    
+    do_updateData_base: function(params, continuar)
+    {
+        cb_ok = function(){
+          if(continuar)
+          {
+            sig = $('#li_'+SELECTED_ID).next('li').children('a');
+            $('#li_'+SELECTED_ID).remove();
 
-         // borrar la foto
-      }
+            if(sig.length == 0)
+            {
+               app.showAlert("No hay mas datos");
+               history.back();
+            }
+            else
+            {
+              app.select( sig );
+            }
 
-      result_fail = function (error) {
-        console.log("Response = " +  error.code);
-        //marcar para intentar luego
-      }
+          }
+          else
+          {
+            $('#li_'+SELECTED_ID).remove();
+            history.back();
+          }
 
-      dNow = new Date();
-      params = {
-          id: SELECTED_ID,
-          fh: dNow,
-          lat: LAT,
-          lng: LNG,
-          remember_token: window.localStorage["remember_token"] 
-         };
-        Remote.uploadImg(imageURI, params );
-        app.waitStop();
+          app.notificar();
+          app.waitStop();
+        }
 
-     },
+
+        cb_fail = function(e){
+          app.showAlert("Error al guardar");
+        }
+
+        app.waitStart("Cargando datos");
+        Remote.upload(params, cb_ok, cb_fail);
+    },
+
 
     do_updateData: function(position){
       try
       {  
-        app.waitStart("Cargando datos");
-
-        LAT = position.coords.latitude;
-        LNG = position.coords.longitude;
-                
-        params = app.getParams();
-        app.uploadLectura(params);
- 
-      
-        app.notificar();
-                 
+        params = app.getParams(position);
+        app.do_updateData_base(params, false);                 
       }
       catch(e)
       {
         app.waitStop();
-        app.showAlert("Error");
-        app.showAlert(e.msg);
+        app.showAlert(e);
       }
     },
 
 
-
+    do_updateDataYSig: function(position){
+      try
+      {  
+        params = app.getParams(position);
+        app.do_updateData_base(params, true);                 
+      }
+      catch(e)
+      {
+        app.waitStop();
+        app.showAlert(e);
+      }
+    },
 
 
     distancia: function (lat1,lon1, lat2, lon2, unit )
@@ -603,12 +632,27 @@ var app = {
 
     },
 
-    recognizeSpeech: function(input)
+    recognizeSpeech: function(element)
     {
       speech_rec.recognize(function(result){
-          $(input).val(result);
+          $(element).val(result);
       });
+    },
+
+    speakControl: function (element)
+    {
+      if($(element).val()) 
+      {
+        tts.speak($(element).val());
+      }
+      else
+      {
+        tts.speak($(element).html());
+      }
     }
+
+
+
 
 
 };
