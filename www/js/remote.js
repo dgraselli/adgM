@@ -28,13 +28,8 @@ var Remote = {
     if( window.localStorage["remember_token"] == null)
       return;
 
-    var dev = {
-          name: device.name,
-          uuid: device.uuid,
-          version: device.version,
-          platform: device.platform,
-          phonegap: device.phonegap,
-    }
+
+    dev = Device.getDevice();
 
     params = {
       lat: position.coords.latitude,

@@ -20,7 +20,7 @@
 
 
 
-var TEST = false;
+var TEST = true;
 var HOST = "https://adgw.herokuapp.com";
 //var HOST = "http://localhost:3000"
 var VERSION=3;
@@ -31,7 +31,6 @@ DB.init();
 Config.init();
 Remote.init( Config.url );
 
-IMAGE_WIDHT = 600;
 //-----------------------------------------------
 
 
@@ -398,7 +397,7 @@ var app = {
           navigator.camera.getPicture(app.onCaptureSuccess, app.onCaptureFail, {
             destinationType: Camera.DestinationType.FILE_URI,
             sourceType: Camera.PictureSourceType.CAMERA,
-            targetWidth: IMAGE_WIDHT,
+            targetWidth: Config.photo_width,
             correctOrientation: true
           });
     },
