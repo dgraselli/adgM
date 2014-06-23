@@ -22,24 +22,25 @@ var c_inc = {
     refreshIncidencias: function()
     {
             data = DB.get("INCIDENCIAS");
-            
-            if(data.length == 0)
+            if(data != undefined)
             {
-                alert('No se encontraron incidencias');
+                if(data.length == 0)
+                {
+                    alert('No se encontraron incidencias');
+                }
+                INCIDENCIAS = data;
+                
+                $("#incidencias ul").empty();
+
+                $.each( data, function( i, item ) {
+                    $("#incidencias ul").append('<li><input type="checkbox" name="incidencia" id ="chk_'+item.id+'" value="'+item.id+'" " /><label for="chk_'+item.id+'" >'+item.nombre+'</label><span id="dv_'+item.id+'"></span></li>');
+                }); 
+                
+
+                $("#incidencias ul li input:checkbox").on('click',function(o){
+                    c_inc.incidenciaSolicitarDato(this);
+                });
             }
-            INCIDENCIAS = data;
-            
-            $("#incidencias ul").empty();
-
-            $.each( data, function( i, item ) {
-                $("#incidencias ul").append('<li><input type="checkbox" name="incidencia" id ="chk_'+item.id+'" value="'+item.id+'" " /><label for="chk_'+item.id+'" >'+item.nombre+'</label><span id="dv_'+item.id+'"></span></li>');
-            }); 
-            
-
-            $("#incidencias ul li input:checkbox").on('click',function(o){
-                c_inc.incidenciaSolicitarDato(this);
-            });
-
 
     },
 

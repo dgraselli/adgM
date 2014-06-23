@@ -20,7 +20,7 @@
 
 
 
-var TEST = false;
+var TEST = true;
 var HOST = "https://adgw.herokuapp.com";
 //var HOST = "http://localhost:3000"
 var VERSION=3;
