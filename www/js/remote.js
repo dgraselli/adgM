@@ -9,7 +9,10 @@ var Remote = {
   	this.URLPUT_FOTO = host+"/update_foto";
     this.URL_MAPA    = host+"/lecturas/$ID/visualizar";
   	this.URL_FOTOS    = host+"/lecturas/$ID/fotos";
-    this.URL_LOGIN   = host+="/login";
+    this.URL_LOGIN   = host+"/login";
+
+    this.URL_BUSCAR_DIRECCION = host+"/buscar_direccion.json";
+    this.URL_GUARDAR_DIRECCION = host+"/guardar_direccion";
   },
 
   rememberLogin: function()
@@ -188,7 +191,71 @@ var Remote = {
       options.chunkedMode = false;  
    
       ft.upload(imagefile, this.URLPUT_FOTO, cb_ok, cb_fail, options);   
+  },
+
+
+
+
+
+  buscarDireccion: function(calle, altura, cb_ok, cb_fail) {
+        
+        token = window.localStorage["remember_token"];
+        user  = window.localStorage["username"];
+        
+        $.getJSON( this.URL_BUSCAR_DIRECCION, {remember_token: token, calle: calle, altura: altura} )
+          .done(function( data ) {
+            
+            if(data.length == 0) 
+              app.showAlert('No se encontraron direccion');
+
+            //DB.save("LECTURAS", data);
+
+            cb_ok(data);
+ 
+          })
+          .fail(function( jqxhr, textStatus, error ) {
+          });
+  },
+
+    buscarDireccionXCercania: function(lat, lon, cb_ok, cb_fail) {
+        
+        token = window.localStorage["remember_token"];
+        user  = window.localStorage["username"];
+        
+        $.getJSON( this.URL_BUSCAR_DIRECCION, {remember_token: token, lat: lat, lon: lon} )
+          .done(function( data ) {
+            
+            if(data.length == 0) 
+              app.showAlert('No se encontraron direccion');
+
+            //DB.save("LECTURAS", data);
+
+            cb_ok(data);
+ 
+          })
+          .fail(function( jqxhr, textStatus, error ) {
+          });
+  },
+  cargarDireccion: function(params, cb_ok, cb_fail) {
+        
+        token = window.localStorage["remember_token"];
+        user  = window.localStorage["username"];
+
+        $.ajax({
+          type: 'POST',
+          url: this.URL_GUARDAR_DIRECCION,
+          data: params,
+          success: function(data){
+            cb_ok(data);
+          },
+          error: function(e){
+            cb_fail(e);
+          },
+          dataType: 'json',
+        });
+
   }
+
 };
 
 

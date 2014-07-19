@@ -74,6 +74,7 @@
 
                 <a data-role="button" href="#config" data-icon="gear" >Opciones</a>
                 <a data-role="button" href="#page_gps" data-icon="gear" >GPS</a>
+                <a data-role="button" href="#page_direcciones" data-icon="gear" >Edificios</a>
                 <br />
                 <a id="btnSalir" data-role="button" onclick="if(confirm('Desea salir de la session ?')) app.handleLogout()" data-icon="home" data-iconpos="left" data-theme="d" ></a>
                 <br />
@@ -205,6 +206,10 @@
                     <h2>Foto</h2>
                     <label>Ancho en px  <input type="number" id="config_photo_width" /> </label>
 
+                    <h2>GPS</h2>
+                    <label>Presicion desdeada (en metros)  <input type="number" id="config_gps_max_acc" /> </label>
+                    <label>Tiempo limite para obtener posision (en seg)  <input type="number" id="config_gps_max_time" /> </label>
+
                     
                     <h2>Version</h2>
                     <div id="version"></div>
@@ -291,6 +296,44 @@
         </div>
 
 </div>
+
+
+<div data-role="page" id="page_direcciones">
+        <div data-role="header" >
+            <h1>Edificios</h1>
+            <a data-role="button" data-rel="back" data-icon="arrow-l" data-iconpos="notext"  data-inline="false"></a>
+        </div>
+
+        <div data-role="content" align="center" id="emailDialog">
+             <input name="calle" id="iptCalle" placeholder="calle"  type="text" /> 
+             <input name="calle" id="iptAltura" placeholder="altura" type="number" pattern="[0-9]*"/> 
+
+             <a  data-role="button" onclick="app.buscarDireccion()" value="Buscar">Buscar</a>              
+             <ul id="edificios" class="ui-listview"></ul>
+             <br/>
+             <br/>
+             <br/>
+             <input  id="iptCantUh"  ondblclick="app.recognizeSpeech('#iptCantUh')" placeholder="#Cant-Unidades" type="number" pattern="[0-9]*" /> 
+             <a data-role="button" onclick="app.geoAndThen(app.cargarDireccion)" value="Agregar">Agregar</a>
+        </div>
+
+</div>
+<div data-role="page" id="page_unidades">
+        <div data-role="header" >
+            <h1>Unidades</h1>
+            <a data-role="button" data-rel="back" data-icon="arrow-l" data-iconpos="notext"  data-inline="false"></a>
+        </div>
+
+        <div data-role="content">
+            <ul id="unidades" class="ui-listview"></ul>
+        </div>
+
+</div>
+
+
+
+
+
         <script type="text/javascript" src="phonegap.js"></script>
         <script type="text/javascript" src="tts.js"></script>
         <script type="text/javascript" src="js/gps.js"></script>

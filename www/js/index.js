@@ -20,9 +20,12 @@
 
 
 
-var TEST = true;
-var HOST = "https://adgw.herokuapp.com";
-//var HOST = "http://localhost:3000"
+//var TEST = false;
+//var HOST = "https://adgw.herokuapp.com";
+//var TEST = false;
+//var HOST = "http://192.168.0.140:3000"
+var TEST = false;
+var HOST = "http://5de9.com.ar:3000"
 var VERSION=3;
 var TRACK_EVERY_MS= 30000;
 
@@ -38,6 +41,8 @@ var SELECTED_ID;
 var IMAGE_DATA;
 var IMAGE_URI;
 var DISTANCIA=[];
+
+var DIRECCIONES = [];
 
 var app = {
     // Application Constructor
@@ -338,9 +343,13 @@ var app = {
          
         }
 
-        $("#solapa_mapa").visible((item.lat != null))
+        if(item.lat != null)
+          $("#solapa_mapa").show();
+        else
+          $("#solapa_mapa").hide();
 
-        $('#btns_guardar').children('a').disabled(false);
+        $('#btns_guardar').children('a').show();
+
       },
 
       loadMapa: function()
@@ -421,13 +430,8 @@ var app = {
         });
         var dNow = new Date();
 
-        var dev = {
-          name: device.name,
-          uuid: device.uuid,
-          version: device.version,
-          platform: device.platform,
-          phonegap: device.phonegap,
-        }
+        var dev = Device.getDevice();
+
         var params = {
           id: SELECTED_ID,
           incidencias: inc,
@@ -435,6 +439,7 @@ var app = {
           fh: dNow,
           lat: position.coords.latitude,
           lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
           pos: position,
           incidencias: c_inc.getIncidenciasCargadas(),
           cambios: c_fid.getDatosFidelizados(),  //array de cambios
@@ -459,15 +464,15 @@ var app = {
     },
 
     updateData: function(){
-        $('#btns_guardar').children('a').attr('disabled',true);
+        $('#btns_guardar').children('a').hide();
         app.waitStart("Cargando datos");
 
         app.geoAndThen(app.do_updateData);
     },
 
     updateDataYSig: function(){
-       $('#btns_guardar').children('a').attr('disabled',true);
-        app.waitStart("Cargando datos");
+       $('#btns_guardar').children('a').hide();
+        app.waitStart("Cargando datos ... ");
 
         app.geoAndThen(app.do_updateDataYSig);
     },
@@ -506,7 +511,6 @@ var app = {
           app.showAlert("Error al guardar");
         }
 
-        app.waitStart("Cargando datos");
         Remote.upload(params, cb_ok, cb_fail);
     },
 
@@ -648,10 +652,141 @@ var app = {
       {
         tts.speak($(element).html());
       }
+    },
+
+    buscarDireccion: function()
+    {
+        if ( $('#iptCalle').val() == '') 
+        { 
+          app.geoAndThen(app.buscarDireccionXCercania)
+          return;
+        }
+
+        app.waitStart('Buscando direccion');     
+        calle = $('#iptCalle').val();
+        altura = $('#iptAltura').val();
+
+        
+
+        cb_ok = function(data){
+          DIRECCIONES = data;
+          app.refreshDirecciones();
+          }
+
+          cb_fail = function(e){}
+
+          Remote.buscarDireccion(calle, altura, cb_ok, cb_fail);
+
+
+    },
+
+
+    buscarDireccionXCercania: function(pos)
+    {
+        app.waitStart('Buscando direccion');     
+        calle = $('#iptCalle').val();
+        altura = $('#iptAltura').val();
+
+        cb_ok = function(data){
+          DIRECCIONES = data;
+          app.refreshDirecciones();
+          }
+
+          cb_fail = function(e){}
+
+
+          Remote.buscarDireccionXCercania(pos.coords.latitude, pos.coords.longitude, cb_ok, cb_fail);
+
+
+    },
+
+    refreshDirecciones: function()
+    {
+          $("#edificios").empty();
+          $.each(DIRECCIONES, function(i,dir){  
+            a = $('<li><a onclick="app.selectDireccion('+i+')" class="ui-btn ui-btn-icon-right ui-icon-carat-r" data-icon="arrow-r" data-role="button" onclick="$.mobile.navigate( \'#page_unidades\' );">'
+                + dir['calle'] +') '
+                + dir['numero'] + ' :: '
+                + '['+dir['cant_unidades']+']'
+                + '</a></li>');
+
+            $("#edificios").append( a ); 
+           });
+
+
+            app.waitStop();
+            app.notificar();  
+
+    },
+
+    selectDireccion: function(i){
+            dir = DIRECCIONES[i];
+
+
+            unidades = $('#unidades'); 
+            unidades.empty();
+              
+            $.each(dir['unidades'], function(i, item){
+
+              unidades.append($('<li >'
+                +item['piso'] + ' - '
+                +item['depto'] + '  '
+                +'['+item['mn'] + ']  '
+                +'['+item['cod_ser'] + ' ] '
+                +item['parcela'] + ' | '
+                +item['subparcela'] + ' ::'
+                +'[U:'+item['unidad'] + ']'
+                +item['razon'] + ' '
+                +' ( $ '+item['vf'] + ') '
+                +' ( M3 '+item['consumo_promedio'] + ') '
+                +'</li>'));
+            });
+
+            $.mobile.navigate( "#page_unidades" );
+            
+    },
+
+    cargarDireccion: function(pos) {
+
+        calle = $('#iptCalle').val();
+        altura = $('#iptAltura').val();
+        val = $('#iptCantUh').val();
+
+        
+        params = {
+          remember_token: token, 
+          calle: calle, 
+          altura: altura, 
+          cant_unidades_relevadas: val,
+          rel_lat: pos.coords.latitude,
+          rel_lon: pos.coords.longitude
+        }
+
+        Remote.cargarDireccion(params, function(data){
+            
+            if(data.result = 'ok')
+            {
+              $("#edificios").empty();
+              $('#iptCalle').val('');
+              $('#iptAltura').val('');
+              $('#iptCantUh').val('');
+
+              app.waitStop();
+              app.notificar();      
+            }
+            else
+            {
+              app.waitStop();
+              app.notificar();      
+              alert('Error:' + data.msg) 
+            }
+            
+
+          }, function(e){
+            alert('Ocurrio un error')
+          });
     }
-
-
-
+    
 
 
 };
